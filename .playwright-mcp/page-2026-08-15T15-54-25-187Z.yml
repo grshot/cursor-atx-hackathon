@@ -1,0 +1,115 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e16]:
+      - heading "Agentic Graph Search" [level=1] [ref=e17]
+      - paragraph [ref=e18]: visual demo · six agents, one graph
+    - paragraph [ref=e19]: not a list of blue links —a graph that grows while you watch.
+  - generic [ref=e23]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]: Query
+        - textbox "Query" [ref=e27]: what's next for agentic AI search?
+      - button "Search ✦" [ref=e28] [cursor=pointer]
+    - generic [ref=e29]:
+      - generic [ref=e30]: grouped by source — web · x · academic
+      - generic [ref=e31]:
+        - button "By Source" [ref=e33] [cursor=pointer]
+        - button "By Subtopic" [ref=e34] [cursor=pointer]
+  - generic [ref=e36]:
+    - generic [ref=e44]:
+      - paragraph [ref=e45]: synthesized answer
+      - paragraph [ref=e46]: “what's next for agentic AI search?”
+      - generic [ref=e47]:
+        - paragraph [ref=e48]: reading 6 agents
+        - paragraph [ref=e49]: "Search is becoming a living graph: one synthesized center answer, ringed by sourced branches you can open and verify — not a list of ten blue links."
+      - paragraph [ref=e50]: 6 / 6 agents resolved · 45 sources
+    - generic [ref=e52] [cursor=pointer]:
+      - generic [ref=e54]: Web Agent
+      - paragraph [ref=e59]: Search products are shifting from ranked links to synthesized, cited answers — agents read the pages so you don’t have to.
+      - generic [ref=e60]:
+        - generic [ref=e61]: 14 sources
+        - generic [ref=e62]: sources
+      - list [ref=e67]:
+        - listitem [ref=e68]:
+          - text: The New Shape of Search
+          - generic [ref=e69]: stratechery
+        - listitem [ref=e70]:
+          - text: Why Answers Beat Links
+          - generic [ref=e71]: wired
+        - listitem [ref=e72]:
+          - text: Agentic Retrieval, Explained
+          - generic [ref=e73]: a16z
+    - generic [ref=e75] [cursor=pointer]:
+      - generic [ref=e77]: X Agent
+      - paragraph [ref=e81]: Builders on X are split — some call graph search a UX wrapper, others a full retrieval rethink.
+      - generic [ref=e82]:
+        - generic [ref=e83]: 9 sources
+        - generic [ref=e84]: sources
+      - list [ref=e89]:
+        - listitem [ref=e90]:
+          - text: "@sama on agent search"
+          - generic [ref=e91]: x.com
+        - listitem [ref=e92]:
+          - text: "thread: is RAG dead?"
+          - generic [ref=e93]: x.com
+        - listitem [ref=e94]:
+          - text: "@karpathy on citations"
+          - generic [ref=e95]: x.com
+    - generic [ref=e97] [cursor=pointer]:
+      - generic [ref=e99]: Academic Agent
+      - paragraph [ref=e104]: Recent papers frame multi-agent retrieval as parallel, verifiable sub-queries fused by one final reasoning pass.
+      - generic [ref=e105]:
+        - generic [ref=e106]: 6 sources
+        - generic [ref=e107]: sources
+      - list [ref=e112]:
+        - listitem [ref=e113]:
+          - text: Parallel Agentic Retrieval, 2025
+          - generic [ref=e114]: arXiv
+        - listitem [ref=e115]:
+          - text: Graph-Structured RAG
+          - generic [ref=e116]: ACL
+        - listitem [ref=e117]:
+          - text: Verifiable Synthesis
+          - generic [ref=e118]: NeurIPS
+    - generic [ref=e120] [cursor=pointer]:
+      - generic [ref=e122]: Angle — Origins
+      - paragraph [ref=e127]: "Traces the lineage: early RAG → tool-calling LLMs → true parallel agent fan-out."
+      - generic [ref=e128]:
+        - generic [ref=e129]: 5 sources
+        - generic [ref=e130]: sources
+      - list [ref=e135]:
+        - listitem [ref=e136]:
+          - text: A Short History of RAG
+          - generic [ref=e137]: pinecone
+        - listitem [ref=e138]:
+          - text: From Chains to Agents
+          - generic [ref=e139]: langchain blog
+    - generic [ref=e141] [cursor=pointer]:
+      - generic [ref=e143]: Angle — Current Debate
+      - paragraph [ref=e148]: "The live debate: is a graph a better research surface than a chat thread?"
+      - generic [ref=e149]:
+        - generic [ref=e150]: 7 sources
+        - generic [ref=e151]: sources
+      - list [ref=e156]:
+        - listitem [ref=e157]:
+          - text: Chat vs. Canvas
+          - generic [ref=e158]: perplexity blog
+        - listitem [ref=e159]:
+          - text: The Case for Graphs
+          - generic [ref=e160]: every.to
+    - generic [ref=e162] [cursor=pointer]:
+      - generic [ref=e164]: Angle — Future Outlook
+      - paragraph [ref=e169]: "Forecast: graphs become the default surface once agents can cite and branch in real time."
+      - generic [ref=e170]:
+        - generic [ref=e171]: 4 sources
+        - generic [ref=e172]: sources
+      - list [ref=e177]:
+        - listitem [ref=e178]:
+          - text: What Comes After Chat
+          - generic [ref=e179]: a16z
+        - listitem [ref=e180]:
+          - text: 2027 Search Predictions
+          - generic [ref=e181]: stratechery
+  - paragraph [ref=e182]:
+    - generic [ref=e183]: mockup only · placeholder content · press Search to replay
+    - generic [ref=e184]: hover a card to lift it · click to expand raw sources
