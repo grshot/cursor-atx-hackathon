@@ -4,6 +4,12 @@ Local stdio MCP server that exposes Scout as one Cursor tool: `scout_search(quer
 
 It drains the shared `orchestrate()` generator (same module as the Next.js app). It does not reimplement fan-out. It is world search only — Cursor's host agent already has repo `semSearch`.
 
+When the MCP client supplies a progress token, graph events are forwarded as
+`notifications/progress`. A 30-second heartbeat covers long gaps between graph
+events so clients with an idle timeout do not abandon an otherwise healthy
+search. MCP cancellation is propagated into `orchestrate()` and its upstream
+requests.
+
 Tool registration is shared code (`mcp-server/server.ts`): both this stdio process and the hosted HTTP endpoint (`app/api/mcp/route.ts`) call the same `createScoutServer()`.
 
 ## Run (dev)
