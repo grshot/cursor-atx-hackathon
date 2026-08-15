@@ -31,11 +31,13 @@ export function CenterNode({
 
   const pulsing = node.status === "pending" && !errorMessage;
   const settled = node.status === "ok";
+  const previewing = node.status === "pending" && !!node.synthesis && !errorMessage;
   const className = [
     "center-node",
     entered ? "in" : "",
     pulsing ? "thinking" : "",
     settled ? "settled" : "",
+    previewing ? "previewing" : "",
     errorMessage ? "failed" : "",
   ]
     .filter(Boolean)
@@ -52,7 +54,9 @@ export function CenterNode({
         if (e.key === "Enter") onSelect();
       }}
     >
-      <p className="center-kicker">synthesized answer</p>
+      <p className="center-kicker">
+        {previewing ? "quick take — scouts refining" : "synthesized answer"}
+      </p>
       <p className="center-query">“{query}”</p>
       <div className="center-answer">
         <p className="thinking-text">
@@ -69,7 +73,9 @@ export function CenterNode({
           ? `${resolvedCount} scouts reported back`
           : errorMessage
             ? "stream lost"
-            : "waiting on branch agents"}
+            : previewing
+              ? "preliminary answer — cited synthesis coming"
+              : "waiting on branch agents"}
       </p>
     </div>
   );

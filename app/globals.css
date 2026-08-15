@@ -475,7 +475,16 @@ body {
   font-weight: 700;
   font-size: 20px;
   letter-spacing: -0.02em;
-  color: var(--text);
+  background: linear-gradient(100deg, var(--cream) 30%, var(--sky) 62%, var(--orange-soft) 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+:root[data-theme="light"] .brand-name {
+  background: linear-gradient(100deg, var(--navy) 35%, #3e6ea8 65%, var(--orange) 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .topbar-status {
@@ -737,13 +746,24 @@ body {
 }
 
 .center-node.settled .thinking-text,
+.center-node.previewing .thinking-text,
 .center-node.failed .thinking-text {
   opacity: 0;
 }
 
 .center-node.settled .final-text,
+.center-node.previewing .final-text,
 .center-node.failed .final-text {
   opacity: 1;
+}
+
+/* quick take: readable but visibly provisional until the real synthesis */
+.center-node.previewing .final-text {
+  color: rgba(244, 236, 220, 0.78);
+}
+
+.center-node.previewing .center-kicker {
+  color: var(--orange-soft);
 }
 
 .center-node.failed {

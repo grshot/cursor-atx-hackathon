@@ -36,6 +36,7 @@ export type GraphEdge = {
 export type GraphEvent =
   | { type: "center_pulse"; queryId: string; query: string }
   | { type: "subqueries_ready"; queryId: string; subQueries: [string, string, string] }
+  | { type: "center_preview"; queryId: string; synthesis: string }
   | { type: "branch_node_added"; queryId: string; node: GraphNode }
   | { type: "agent_error"; queryId: string; agentType: AgentType; message: string }
   | { type: "center_updated"; queryId: string; synthesis: string }
