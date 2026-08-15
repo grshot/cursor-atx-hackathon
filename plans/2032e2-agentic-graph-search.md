@@ -51,9 +51,11 @@ Full results/rationale: [issue #4](https://github.com/grshot/cursor-atx-hackatho
 - [x] Record backend-language decision: Next.js API route + shared TS `orchestrate()` for the web app, no FastAPI; Python scoped only to the academic agent
 
 ### Definition of Done
-- [ ] All 4 scratch tests succeeded against real APIs (xAI key, Semantic Scholar) — 3/4 clean; Semantic Scholar key needs fixing (see issue #4)
+- [ ] All 4 scratch tests succeeded against real APIs (xAI key, Semantic Scholar) — 3/4 clean; Semantic Scholar key still 403s as of last check, likely activation delay on S2's side (ruled out header/corruption/endpoint on our end) — does not block Phase 1, only Phase 4 (Teammate B should retry when starting that phase)
 - [x] Mixed Next.js + Python Vercel dev setup confirmed working locally
 - [x] SSE schema, MCP tool schema, layout approach, and `AgentResult` shape are written down (in the PR description of Phase 1) so Phase 2–8 owners aren't blocked on a design call mid-build
+
+Phase 0 is otherwise closed out — proceeding to Phase 1.
 
 > **Note to implementing agent:** run `/compact` after this phase merges. Before compacting, retain in working notes:
 > - Exact `AgentResult` shape: `{ synthesis: string, citations: Citation[], citationCount: number }`
@@ -307,6 +309,7 @@ Recorded in `docs/adr/` and domain language in `CONTEXT.md`. Do not re-litigate 
 
 - [ ] Cursor Canvas (`.canvas.tsx` live-file render) — stretch-only, not scheduled
 - [ ] Cursor SDK "send to a live coding agent" hand-off — stretch-only, attempt only if Phase 9 finishes early
+- [ ] Serper (Google/Bing SERP API) as a web-agent source — deferred per Phase 0 decision (issue #4). Grok `web_search` already covers web sourcing end-to-end (search + synthesis + citations in one call); Serper doesn't unlock a new source type (X is separately covered by `x_search`) and would add an extra synthesis pass without fixing the actual latency bottleneck (`x_search` at ~47s was slower than `web_search` at ~35s in Phase 0 testing, and has no Serper equivalent). Revisit only if live-demo latency proves to be an actual blocker, not before.
 
 Attempt Phases 10–12 only after Phase 9 (or when explicitly skipping ahead). They must not change the 6-agent DAG, must not require signups beyond `XAI_API_KEY` for the core demo, and must not add LangChain.
 
