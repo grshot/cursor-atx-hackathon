@@ -27,6 +27,10 @@ export type GraphNode = {
   errorMessage?: string; // set when status is "error"
 };
 
+// Prior searches from the same session, sent by the client so follow-up
+// searches build on (rather than repeat) what's already been explored.
+export type SessionContext = { query: string; synthesis: string }[];
+
 export type GraphEdge = {
   id: string;
   source: string;

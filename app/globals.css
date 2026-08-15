@@ -651,13 +651,25 @@ body {
   stroke-opacity: 0.4;
 }
 
-.group-halo-label {
+/* DOM-layer halo captions: sit above cards so they can never be hidden,
+   with a soft theme backdrop for legibility over anything */
+.halo-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 4;
   font-family: var(--mono);
   font-weight: 500;
-  font-size: 13px;
-  letter-spacing: 0.16em;
+  font-size: 12px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  fill-opacity: 0.72;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 7px;
+  background: rgba(var(--topbar-tint), 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 .cross-line {

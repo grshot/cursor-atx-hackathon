@@ -1,5 +1,30 @@
 import { orchestrate } from "@/lib/orchestration/orchestrate";
-import type { GraphEvent } from "@/lib/types";
+import type { GraphEvent, SessionContext } from "@/lib/types";
+
+// Optional prior-session context: [{ query, synthesis }], capped so a
+// malicious/buggy client can't stuff the prompt.
+function parseContext(body: unknown): SessionContext | undefined {
+  if (typeof body !== "object" || body === null || !("context" in body)) return undefined;
+  const raw = (body as { context: unknown }).context;
+  if (!Array.isArray(raw)) return undefined;
+  const context: SessionContext = [];
+  for (const item of raw.slice(0, 5)) {
+    if (
+      typeof item === "object" &&
+      item !== null &&
+      "query" in item &&
+      "synthesis" in item &&
+      typeof item.query === "string" &&
+      typeof item.synthesis === "string"
+    ) {
+      context.push({
+        query: item.query.slice(0, 300),
+        synthesis: item.synthesis.slice(0, 600),
+      });
+    }
+  }
+  return context.length > 0 ? context : undefined;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +67,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const iterator = orchestrate(query, { signal: request.signal });
+  const iterator = orchestrate(query, {
+    signal: request.signal,
+    context: parseContext(body),
+  });
 
   const stream = new ReadableStream<Uint8Array>({
     async pull(controller) {

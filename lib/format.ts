@@ -87,6 +87,31 @@ export function shortLabel(text: string, max = 30): string {
   return `${cut.slice(0, lastSpace > max * 0.5 ? lastSpace : max)}…`;
 }
 
+// Halo caption for an angle: the sub-query minus the topic itself (every
+// cluster is already about the topic) and any dangling connector words, so
+// "history and origins of the four-day work week" → "history and origins"
+// instead of a mid-word ellipsis.
+const DANGLING = /\s+(of|for|the|a|an|and|around|about|to|in|on|with|behind)\s*$/i;
+
+export function angleLabel(subQuery: string, query: string): string {
+  let label = subQuery.trim();
+  const topic = query.trim();
+  if (topic) {
+    const index = label.toLowerCase().indexOf(topic.toLowerCase());
+    if (index !== -1) {
+      label = `${label.slice(0, index)} ${label.slice(index + topic.length)}`.trim();
+    }
+  }
+  label = label.replace(/[\s,:;–—-]+$/g, "");
+  let previous = "";
+  while (previous !== label) {
+    previous = label;
+    label = label.replace(DANGLING, "").trim();
+  }
+  if (!label) label = subQuery.trim();
+  return shortLabel(label, 42);
+}
+
 // ---------- source titles ----------
 
 function humanizeSlug(slug: string): string {

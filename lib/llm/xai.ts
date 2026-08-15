@@ -5,6 +5,12 @@
 const XAI_RESPONSES_URL = "https://api.x.ai/v1/responses";
 const MODEL = "grok-4.6";
 
+// Non-reasoning variant: same search tools, none of the reasoning overhead.
+// Measured live: quick take 2.7s (vs 9.3s on grok-4.6), web_search call
+// 45.1s with 10 citations. Used for latency-critical calls (quick take,
+// sub-queries, agents); the final synthesis stays on the reasoning model.
+export const FAST_MODEL = "grok-4.20-0309-non-reasoning";
+
 // Phase 0/3 measured real calls at 35–116s; anything past this is treated as
 // hung — the fetch aborts and the caller surfaces it as a normal agent_error
 // instead of holding the whole SSE stream open forever.
@@ -32,7 +38,8 @@ export type XaiResponse = {
 async function callResponses(
   input: string,
   tools?: XaiTool[],
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  model: string = MODEL
 ): Promise<XaiResponse> {
   const apiKey = process.env.GROK_API_KEY;
   if (!apiKey) {
@@ -47,7 +54,7 @@ async function callResponses(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       input: [{ role: "user", content: input }],
       ...(tools ? { tools } : {}),
     }),

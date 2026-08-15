@@ -1,19 +1,27 @@
 import { xai, extractMessage } from "@/lib/llm/xai";
-import type { AgentResult } from "@/lib/types";
+import type { AgentResult, SessionContext } from "@/lib/types";
 
 // Final Grok call: combines all resolved AgentResults into one synthesized
-// answer for the center node. Runs after all 6 agents have settled.
+// answer for the center node. Runs after all 6 agents have settled. Stays on
+// the reasoning model — quality matters most here.
 export async function synthesize(
   query: string,
   results: AgentResult[],
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  context?: SessionContext
 ): Promise<string> {
   const numbered = results.map((r, i) => `Agent ${i + 1} findings:\n${r.synthesis}`).join("\n\n");
+  const sessionBlock =
+    context && context.length > 0
+      ? `\n\nEarlier in this session the user already searched:\n${context
+          .map((c, i) => `${i + 1}. "${c.query}" — ${c.synthesis}`)
+          .join("\n")}\n\nWhere it helps, connect the new answer to what the session already established instead of repeating it.`
+      : "";
   const prompt = `The user's original query was: "${query}"
 
 Here are ${results.length} independent research syntheses from different agents covering different sources/angles:
 
-${numbered}
+${numbered}${sessionBlock}
 
 Write ONE comprehensive answer to the user's original query that synthesizes these findings — do not just concatenate them. Respond with plain text only (no citations; those are tracked separately per agent).`;
 
