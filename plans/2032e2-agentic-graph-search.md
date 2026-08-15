@@ -72,22 +72,22 @@ Phase 0 is otherwise closed out — proceeding to Phase 1.
 **Estimated diff:** ~250 lines across 10 files
 
 ### Checklist
-- [ ] `package.json`, `tsconfig.json`, `next.config.ts` — Next.js app scaffold (App Router)
-- [ ] `app/layout.tsx`, `app/page.tsx` — placeholder shell page, titled "Scout"
-- [ ] `lib/types.ts` — `GraphNode`, `GraphEdge`, `Citation`, `AgentResult`, `GraphEvent` (discriminated union per Phase 0 SSE schema)
-- [ ] `lib/orchestration/orchestrate.ts` — stub `async function* orchestrate(query: string): AsyncGenerator<GraphEvent>` yielding hardcoded fake events (unblocks Phase 6/5)
-- [ ] `lib/agents/agentRunner.ts` — empty exported shape (`AgentResult`) + TODO for Viren to fill in during Phase 2
-- [ ] `api/academic-agent.py` — stub Vercel Python function returning a hardcoded mock `AgentResult` JSON (unblocks Teammate B without waiting)
-- [ ] `.env.local.example` — `XAI_API_KEY` placeholder
-- [ ] `README.md` — setup steps (`vercel dev`, required env vars, no other signups)
-- [ ] `mcp-server/` — empty package scaffold (`package.json`, `tsconfig.json`) for Phase 5
-- [ ] Open PR and confirm `next dev` (or `vercel dev`) boots with the placeholder page
+- [x] `package.json`, `tsconfig.json`, `next.config.ts` — Next.js app scaffold (App Router)
+- [x] `app/layout.tsx`, `app/page.tsx` — placeholder shell page, titled "Scout"
+- [x] `lib/types.ts` — `GraphNode`, `GraphEdge`, `Citation`, `AgentResult`, `GraphEvent` (discriminated union per Phase 0 SSE schema)
+- [x] `lib/orchestration/orchestrate.ts` — stub `async function* orchestrate(query: string): AsyncGenerator<GraphEvent>` yielding hardcoded fake events (unblocks Phase 6/5)
+- [x] `lib/agents/agentRunner.ts` — empty exported shape (`AgentResult`) + TODO for Viren to fill in during Phase 2
+- [x] `api/academic-agent.py` — stub Vercel Python function returning a hardcoded mock `AgentResult` JSON (unblocks Teammate B without waiting)
+- [x] `.env.local.example` — `GROK_API_KEY` + `SEMANTIC_SCHOLAR_API_KEY` placeholders (renamed from `XAI_API_KEY` per Phase 0's env-naming decision)
+- [x] `README.md` — setup steps (`vercel dev`, required env vars, no other signups), including Phase 0's `UV_PYTHON` fix
+- [x] `mcp-server/` — empty package scaffold (`package.json`, `tsconfig.json`) for Phase 5
+- [x] Confirm `next dev`/`vercel dev` boots with the placeholder page — no PR opened (solo commit directly to `main` for this phase)
 
 ### Definition of Done
-- [ ] `next dev` boots locally with no errors
-- [ ] `orchestrate()` stub is importable and yields fake `GraphEvent`s end-to-end
-- [ ] `api/academic-agent.py` stub returns valid mock JSON when curled locally
-- [ ] All 3 teammates have pulled this branch and confirmed they can start their phase against the stubs
+- [x] `next dev` boots locally with no errors — also verified `next build`, `tsc --noEmit`, and `eslint` all pass clean
+- [x] `orchestrate()` stub is importable and yields fake `GraphEvent`s end-to-end — verified: `center_pulse -> 6x branch_node_added -> center_updated -> done` (9 events)
+- [x] `api/academic-agent.py` stub returns valid mock JSON when curled locally — verified via `vercel dev` (with `UV_PYTHON` pinned)
+- [ ] All 3 teammates have pulled this branch and confirmed they can start their phase against the stubs — pending Teammate A/B
 
 > **Note to implementing agent:** run `/compact` after this phase merges. Before compacting, retain in working notes:
 > - Exact `orchestrate()` export signature and file path (`lib/orchestration/orchestrate.ts`) — Phases 3, 6, 9 all import this
