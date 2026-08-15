@@ -37,21 +37,23 @@ Architecture decisions that constrain all phases live in `docs/adr/` (0001–000
 **Goal:** Resolve the spec's open questions and confirm the three external calls actually work before 3 people start building on top of them.
 **Estimated diff:** 0 lines (decisions + throwaway scratch scripts only, nothing committed to the app)
 
+Full results/rationale: [issue #4](https://github.com/grshot/cursor-atx-hackathon/issues/4).
+
 ### Checklist
-- [ ] Confirm `next dev` + a Python file under `api/` both run locally via `vercel dev` (mixed-runtime project works)
-- [ ] Scratch-test Grok `web_search` tool call with the real xAI key — confirm request/response shape
-- [ ] Scratch-test Grok `x_search` tool call with the real xAI key — confirm request/response shape
-- [ ] Scratch-test Semantic Scholar API call (no auth required) — confirm response shape for a sample query
-- [ ] Decide + write down SSE event schema: `center_pulse`, `branch_node_added`, `center_updated`, `agent_error`, `done`
-- [ ] Decide + write down MCP tool schema: single tool `scout_search(query: string)` returning `{ nodes, edges, citations }`
-- [ ] Decide layout algorithm: two precomputed static position sets (by-source, by-subtopic) computed client-side from the same node list — toggle swaps `node.position`, no re-query. Use `demo/index.html`'s `computeLayout()` approach (runtime-measured, overlap-safe hex-ring) as the reference, not hand-picked percentages.
-- [ ] Decide the common `AgentResult` shape all 6 agents must return: `{ synthesis: string, citations: Citation[], citationCount: number }`
-- [ ] Record backend-language decision: Next.js API route + shared TS `orchestrate()` for the web app, no FastAPI; Python scoped only to the academic agent
+- [x] Confirm `next dev` + a Python file under `api/` both run locally via `vercel dev` (mixed-runtime project works) — confirmed; needs `UV_PYTHON` pinned to a pyenv-managed 3.12+ interpreter (Homebrew's is PEP-668-blocked), otherwise `@vercel/python`'s bundled `uv` defaults to an incompatible 3.11.14
+- [x] Scratch-test Grok `web_search` tool call with the real xAI key — confirm request/response shape — confirmed; `POST https://api.x.ai/v1/responses`, citations come from `output[].content[].annotations` (`url_citation`), not the top-level `citations` field (was `null`); no real titles/snippets, just URL + numeric label. ~35s latency, ~$0.99/call
+- [x] Scratch-test Grok `x_search` tool call with the real xAI key — confirm request/response shape — confirmed; same shape, tool-call step type is `custom_tool_call` (not `x_search_call`). ~47s latency, ~$0.36/call
+- [ ] Scratch-test Semantic Scholar API call (no auth required) — confirm response shape for a sample query — MIXED: anonymous single-paper lookup works (200), anonymous `/search` is 429-rate-limited from this environment, and the provided `SEMANTIC_SCHOLAR_API_KEY` returns 403 — needs a working key before Phase 4
+- [x] Decide + write down SSE event schema: `center_pulse`, `branch_node_added`, `center_updated`, `agent_error`, `done`
+- [x] Decide + write down MCP tool schema: single tool `scout_search(query: string)` returning `{ nodes, edges, citations }`
+- [x] Decide layout algorithm: two precomputed static position sets (by-source, by-subtopic) computed client-side from the same node list — toggle swaps `node.position`, no re-query. Uses `demo/index.html`'s `computeLayout()` approach (runtime-measured, overlap-safe hex-ring), plus its fixed arbitrary-pairing scheme for the 3-vs-3 clustering (see issue #4 for the honesty caveat on aggregate vs. query agents).
+- [x] Decide the common `AgentResult` shape all 6 agents must return — revised from placeholder based on the real Grok response (no titles/snippets available): `{ synthesis: string, citations: { url: string, title: string, source: 'web'|'x'|'academic' }[], citationCount: number }`; `title` is derived (real title from Semantic Scholar when available, else URL hostname)
+- [x] Record backend-language decision: Next.js API route + shared TS `orchestrate()` for the web app, no FastAPI; Python scoped only to the academic agent
 
 ### Definition of Done
-- [ ] All 4 scratch tests succeeded against real APIs (xAI key, Semantic Scholar)
-- [ ] Mixed Next.js + Python Vercel dev setup confirmed working locally
-- [ ] SSE schema, MCP tool schema, layout approach, and `AgentResult` shape are written down (in the PR description of Phase 1) so Phase 2–8 owners aren't blocked on a design call mid-build
+- [ ] All 4 scratch tests succeeded against real APIs (xAI key, Semantic Scholar) — 3/4 clean; Semantic Scholar key needs fixing (see issue #4)
+- [x] Mixed Next.js + Python Vercel dev setup confirmed working locally
+- [x] SSE schema, MCP tool schema, layout approach, and `AgentResult` shape are written down (in the PR description of Phase 1) so Phase 2–8 owners aren't blocked on a design call mid-build
 
 > **Note to implementing agent:** run `/compact` after this phase merges. Before compacting, retain in working notes:
 > - Exact `AgentResult` shape: `{ synthesis: string, citations: Citation[], citationCount: number }`
