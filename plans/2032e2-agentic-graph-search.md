@@ -104,20 +104,21 @@ Phase 0 is otherwise closed out — proceeding to Phase 1.
 **Estimated diff:** ~220 lines across 4 files
 
 ### Checklist
-- [ ] `lib/orchestration/subquery.ts` — Grok call that generates the 3 sub-query angles from the user query
-- [ ] `lib/agents/agentRunner.ts` — shared helper: fire a Grok tool call (`web_search` or `x_search`), parse citations out of the response, produce a mini-synthesis → returns `AgentResult`
-- [ ] `lib/agents/webAgent.ts` — runs `agentRunner` with `web_search` across the same 3 sub-queries
-- [ ] `lib/agents/xAgent.ts` — runs `agentRunner` with `x_search` across the same 3 sub-queries
-- [ ] Open PR and manually verify `webAgent`/`xAgent` return real `AgentResult`s for a sample query
+- [x] `lib/orchestration/subquery.ts` — Grok call that generates the 3 sub-query angles from the user query
+- [x] `lib/agents/agentRunner.ts` — shared helper: fire a Grok tool call (`web_search` or `x_search`), parse citations out of the response, produce a mini-synthesis → returns `AgentResult`
+- [x] `lib/agents/webAgent.ts` — runs `agentRunner` with `web_search` across the same 3 sub-queries
+- [x] `lib/agents/xAgent.ts` — runs `agentRunner` with `x_search` across the same 3 sub-queries
+- [x] Open PR and manually verify `webAgent`/`xAgent` return real `AgentResult`s for a sample query
 
 ### Definition of Done
-- [ ] `webAgent` and `xAgent` both return real citations (not mocked) for a test query
-- [ ] `agentRunner` is reusable as-is by the 3 query-agents in Phase 3 (single Grok `web_search` call, 1 sub-query)
+- [x] `webAgent` and `xAgent` both return real citations (not mocked) for a test query — verified against real xAI API: 4 deduped citations each, real synthesis text
+- [x] `agentRunner` is reusable as-is by the 3 query-agents in Phase 3 (single Grok `web_search` call, 1 sub-query) — `buildPrompt` already branches on `subQueries.length === 1`
 
 > **Note to implementing agent:** run `/compact` after this phase merges. Before compacting, retain in working notes:
 > - `agentRunner(tool, subQueries)` exact signature — Phase 3's query agents call this with a single-element `subQueries` array and `tool: 'web_search'`
-> - Actual field names Grok returns citations under (from the real API response, not the scratch test) — needed verbatim for `queryAgent.ts`
-> - Any rate-limit / latency behavior observed running 2 agents × 3 sub-queries — relevant to Phase 3's fan-out timing and Phase 9's end-to-end demo timing
+> - Confirmed citation shape from `lib/llm/xai.ts`'s `extractMessage()`: annotations come off `response.output.find(item => item.type === "message").content.find(c => c.type === "output_text").annotations`, each `{ url, title, start_index, end_index }` — Grok's `title` is just a numeric citation label, not a real page title, so `agentRunner.ts`'s `deriveTitle()` derives a hostname fallback instead (`new URL(url).hostname` minus `www.`) — Phase 4's academic agent should prefer real Semantic Scholar titles when available, same `Citation.title` field
+> - `agentRunner(tool, subQueries)` fires ONE Grok tool call covering all sub-queries at once (not one call per sub-query) — Phase 3's query agents pass a single-element array to get the 1-call-per-sub-query behavior
+> - No rate-limiting observed running `webAgent`/`xAgent` concurrently (2 concurrent Grok Responses API calls, 3 sub-queries combined into 1 prompt each) — both returned cleanly with real citations
 
 ## Phase 3 — Orchestration: Query Agents, Synthesis & Fan-out
 
