@@ -5,6 +5,7 @@
 node_modules/
 .next/
 .vercel/
+mcp-server/dist/
 __pycache__/
 __pycache__/
 *.pyc

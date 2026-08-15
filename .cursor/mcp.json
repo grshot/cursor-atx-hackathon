@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "scout-local": {
+      "command": "${workspaceFolder}/mcp-server/start.sh",
+      "envFile": "${workspaceFolder}/.env.local"
+    },
+    "scout-hosted": {
+      "url": "https://scoutsearch.vercel.app/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:SCOUT_MCP_TOKEN}"
+      }
+    }
+  }
+}
