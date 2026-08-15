@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const iterator = orchestrate(query);
+  const iterator = orchestrate(query, { signal: request.signal });
 
   const stream = new ReadableStream<Uint8Array>({
     async pull(controller) {

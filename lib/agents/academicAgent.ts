@@ -10,11 +10,18 @@ function resolveBaseUrl(): string {
   return "http://localhost:3000";
 }
 
-export async function academicAgent(subQueries: string[]): Promise<AgentResult> {
+const CALL_TIMEOUT_MS = 120_000;
+
+export async function academicAgent(
+  subQueries: string[],
+  signal?: AbortSignal
+): Promise<AgentResult> {
+  const timeout = AbortSignal.timeout(CALL_TIMEOUT_MS);
   const res = await fetch(`${resolveBaseUrl()}/api/academic-agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ subQueries }),
+    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
   });
   if (!res.ok) {
     throw new Error(`academic-agent error ${res.status}: ${await res.text()}`);

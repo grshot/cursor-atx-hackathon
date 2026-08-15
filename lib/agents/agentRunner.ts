@@ -7,10 +7,11 @@ import { xai, extractMessage } from "@/lib/llm/xai";
 // in Phase 3 (single-element subQueries array).
 export async function agentRunner(
   tool: "web_search" | "x_search",
-  subQueries: string[]
+  subQueries: string[],
+  signal?: AbortSignal
 ): Promise<AgentResult> {
   const prompt = buildPrompt(subQueries);
-  const response = await xai.callResponses(prompt, [{ type: tool }]);
+  const response = await xai.callResponses(prompt, [{ type: tool }], signal);
   const { text, annotations } = extractMessage(response);
 
   const source = tool === "web_search" ? "web" : "x";

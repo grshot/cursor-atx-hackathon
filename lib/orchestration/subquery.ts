@@ -3,14 +3,17 @@ import { xai, extractMessage } from "@/lib/llm/xai";
 // Reasoning-provider call (no tools) that splits a user query into exactly
 // 3 sub-query angles, fanned out to the 3 query-agents in Phase 3 and used
 // as the shared sub-query set for the web/X/academic aggregate agents.
-export async function generateSubQueries(query: string): Promise<[string, string, string]> {
+export async function generateSubQueries(
+  query: string,
+  signal?: AbortSignal
+): Promise<[string, string, string]> {
   const prompt = `Given this search query, generate exactly 3 distinct sub-query angles that together give comprehensive coverage of the topic (e.g. origins/background, current state/debate, future outlook — adapt the angles to fit the actual query).
 
 Respond with ONLY a JSON array of exactly 3 short strings (each a standalone search query), no other text.
 
 Query: "${query}"`;
 
-  const response = await xai.callResponses(prompt);
+  const response = await xai.callResponses(prompt, undefined, signal);
   const { text } = extractMessage(response);
 
   const parsed = parseSubQueries(text);

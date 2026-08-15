@@ -22,19 +22,41 @@ async function* asCompleted<T>(promises: Promise<T>[]): AsyncGenerator<T> {
   }
 }
 
-export async function* orchestrate(query: string): AsyncGenerator<GraphEvent> {
+// Every code path out of this generator ends with center_updated -> done:
+// the SSE route has already sent a 200 + headers by the time anything here
+// runs, so an escaped throw can only surface as a dropped connection the
+// client can't distinguish from a network failure. Failures are folded into
+// the event stream instead. `signal` (client disconnect) aborts all in-flight
+// upstream calls so an abandoned query stops burning Grok spend.
+export async function* orchestrate(
+  query: string,
+  options?: { signal?: AbortSignal }
+): AsyncGenerator<GraphEvent> {
+  const signal = options?.signal;
   const queryId = `q-${Date.now()}`;
   yield { type: "center_pulse", queryId, query };
 
-  const subQueries = await generateSubQueries(query);
+  let subQueries: [string, string, string];
+  try {
+    subQueries = await generateSubQueries(query, signal);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    yield {
+      type: "center_updated",
+      queryId,
+      synthesis: `Search failed before any agents could start: ${message}`,
+    };
+    yield { type: "done", queryId };
+    return;
+  }
 
   const tasks: { agentType: AgentType; run: () => Promise<AgentResult> }[] = [
-    { agentType: "web", run: () => webAgent(subQueries) },
-    { agentType: "x", run: () => xAgent(subQueries) },
-    { agentType: "academic", run: () => academicAgent(subQueries) },
-    { agentType: "query1", run: () => queryAgent(subQueries[0]) },
-    { agentType: "query2", run: () => queryAgent(subQueries[1]) },
-    { agentType: "query3", run: () => queryAgent(subQueries[2]) },
+    { agentType: "web", run: () => webAgent(subQueries, signal) },
+    { agentType: "x", run: () => xAgent(subQueries, signal) },
+    { agentType: "academic", run: () => academicAgent(subQueries, signal) },
+    { agentType: "query1", run: () => queryAgent(subQueries[0], signal) },
+    { agentType: "query2", run: () => queryAgent(subQueries[1], signal) },
+    { agentType: "query3", run: () => queryAgent(subQueries[2], signal) },
   ];
 
   const outcomes = tasks.map((task) =>
@@ -72,10 +94,21 @@ export async function* orchestrate(query: string): AsyncGenerator<GraphEvent> {
     }
   }
 
-  const synthesis =
-    results.length > 0
-      ? await synthesize(query, results)
-      : "All agents failed to return results for this query.";
+  // Client is gone — every remaining event would be dropped, so don't spend
+  // another ~29s/1 Grok call on a synthesis nobody will see.
+  if (signal?.aborted) return;
+
+  let synthesis: string;
+  if (results.length === 0) {
+    synthesis = "All agents failed to return results for this query.";
+  } else {
+    try {
+      synthesis = await synthesize(query, results, signal);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      synthesis = `Final synthesis failed (${message}) — the ${results.length} branch nodes above each carry their own synthesized findings and citations.`;
+    }
+  }
 
   yield { type: "center_updated", queryId, synthesis };
   yield { type: "done", queryId };
