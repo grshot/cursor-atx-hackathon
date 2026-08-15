@@ -3,40 +3,40 @@
 import { FormEvent, useState } from "react";
 
 type Props = {
-  disabled?: boolean;
-  defaultQuery?: string;
+  variant: "hero" | "bar";
   onSubmitQuery: (query: string) => void;
 };
 
-export function SearchInput({
-  disabled,
-  defaultQuery = "is fusion power actually close?",
-  onSubmitQuery,
-}: Props) {
-  const [value, setValue] = useState(defaultQuery);
+export function SearchInput({ variant, onSubmitQuery }: Props) {
+  const [value, setValue] = useState("");
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const query = value.trim();
     if (!query) return;
     onSubmitQuery(query);
+    setValue("");
   }
 
   return (
-    <form className="search-row" onSubmit={handleSubmit}>
-      <div className="search-field">
-        <label htmlFor="q">Query</label>
-        <input
-          id="q"
-          type="text"
-          value={value}
-          spellCheck={false}
-          disabled={disabled}
-          onChange={(event) => setValue(event.target.value)}
-        />
-      </div>
-      <button className="go-btn" type="submit" disabled={disabled}>
-        Search
+    <form className={`search-pill ${variant}`} onSubmit={handleSubmit}>
+      <input
+        type="text"
+        value={value}
+        spellCheck={false}
+        autoFocus={variant === "hero"}
+        placeholder={
+          variant === "hero"
+            ? "ask anything — the scouts fan out"
+            : "search again to grow the map…"
+        }
+        aria-label="Search query"
+        onChange={(event) => setValue(event.target.value)}
+      />
+      <button className="pill-go" type="submit" aria-label="Search">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M3.5 10h12M11 5.5 16.5 10 11 14.5" />
+        </svg>
       </button>
     </form>
   );

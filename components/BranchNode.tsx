@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { AgentType, GraphNode } from "@/lib/types";
+import type { WorldPoint } from "@/lib/constellation";
+import { cleanErrorMessage, shortLabel, stripMarkdown } from "@/lib/format";
 
 const ICONS: Record<string, string> = {
   globe:
@@ -16,12 +18,12 @@ const ICONS: Record<string, string> = {
 type Meta = { tag: string; icon: keyof typeof ICONS; sub: string; group: 0 | 1 | 2 };
 
 const AGENT_META: Record<AgentType, Meta> = {
-  web: { tag: "Web Agent", icon: "globe", sub: "spans all 3 angles", group: 0 },
-  x: { tag: "X Agent", icon: "spark", sub: "spans all 3 angles", group: 1 },
-  academic: { tag: "Academic Agent", icon: "book", sub: "spans all 3 angles", group: 2 },
-  query1: { tag: "Angle 1", icon: "compass", sub: "web-sourced · single angle", group: 0 },
-  query2: { tag: "Angle 2", icon: "compass", sub: "web-sourced · single angle", group: 2 },
-  query3: { tag: "Angle 3", icon: "compass", sub: "web-sourced · single angle", group: 1 },
+  web: { tag: "Web Scout", icon: "globe", sub: "spans all angles", group: 0 },
+  x: { tag: "X Scout", icon: "spark", sub: "spans all angles", group: 1 },
+  academic: { tag: "Academic Scout", icon: "book", sub: "spans all angles", group: 2 },
+  query1: { tag: "Angle 1", icon: "compass", sub: "web-sourced · angle 1", group: 0 },
+  query2: { tag: "Angle 2", icon: "compass", sub: "web-sourced · angle 2", group: 2 },
+  query3: { tag: "Angle 3", icon: "compass", sub: "web-sourced · angle 3", group: 1 },
 };
 
 const GROUP_COLORS = [
@@ -30,35 +32,60 @@ const GROUP_COLORS = [
   "var(--group-c)",
 ] as const;
 
-type Props = {
-  node: GraphNode;
-};
-
 export function branchGroupColor(agentType: AgentType | undefined): string {
   if (!agentType) return GROUP_COLORS[0];
   return GROUP_COLORS[AGENT_META[agentType].group];
 }
 
-export function BranchNode({ node }: Props) {
+// The angle agents are named by their actual sub-query when it's known;
+// "Angle N" is only the placeholder before subqueries_ready arrives.
+export function branchLabel(node: Pick<GraphNode, "agentType" | "subQuery">): string {
+  if (node.subQuery) return shortLabel(node.subQuery, 34);
+  return node.agentType ? AGENT_META[node.agentType].tag : "Scout";
+}
+
+type Props = {
+  node: GraphNode;
+  pos: WorldPoint;
+  onSelect: (nodeId: string) => void;
+};
+
+export function BranchNode({ node, pos, onSelect }: Props) {
   const [entered, setEntered] = useState(false);
   const meta = node.agentType ? AGENT_META[node.agentType] : AGENT_META.web;
   const isError = node.status === "error";
+  const isPending = node.status === "pending";
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setEntered(true));
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  const className = ["node", entered ? "in" : "", isError ? "error" : ""]
+  const className = [
+    "node",
+    entered ? "in" : "",
+    isError ? "error" : "",
+    isPending ? "pending" : "",
+  ]
     .filter(Boolean)
     .join(" ");
 
   return (
     <div
       className={className}
-      id={`node-${node.id}`}
+      style={{ left: pos.x, top: pos.y }}
       data-kind="branch"
       data-agent={node.agentType}
+      role={isPending ? undefined : "button"}
+      tabIndex={isPending ? undefined : 0}
+      onClick={isPending ? undefined : () => onSelect(node.id)}
+      onKeyDown={
+        isPending
+          ? undefined
+          : (e) => {
+              if (e.key === "Enter") onSelect(node.id);
+            }
+      }
     >
       <div className="card">
         <div className="node-head">
@@ -77,18 +104,34 @@ export function BranchNode({ node }: Props) {
             aria-hidden
             dangerouslySetInnerHTML={{ __html: ICONS[meta.icon] }}
           />
-          <span className="node-tag">{meta.tag}</span>
+          <span className="node-tag">{branchLabel(node)}</span>
         </div>
-        <p className="node-sub">{isError ? "agent failed" : meta.sub}</p>
-        <p className="node-text">
-          {isError
-            ? node.errorMessage || "This agent did not return a result."
-            : node.synthesis}
+        <p className="node-sub">
+          {isPending ? "scouting" : isError ? "agent failed" : meta.sub}
+          {isPending ? <span className="thinking-dots" /> : null}
         </p>
+        {isPending ? (
+          <div className="node-skeleton" aria-hidden>
+            <span />
+            <span />
+            <span />
+          </div>
+        ) : (
+          <p className="node-text">
+            {isError
+              ? cleanErrorMessage(node.errorMessage || "This agent did not return a result.")
+              : stripMarkdown(node.synthesis ?? "")}
+          </p>
+        )}
         <div className="node-foot">
           <span className="cite-count">
-            {isError ? "0 sources" : `${node.citationCount ?? 0} sources`}
+            {isPending
+              ? "searching sources"
+              : isError
+                ? "0 sources"
+                : `${node.citationCount ?? 0} sources`}
           </span>
+          {!isPending && !isError ? <span className="node-open">expand ›</span> : null}
         </div>
       </div>
     </div>

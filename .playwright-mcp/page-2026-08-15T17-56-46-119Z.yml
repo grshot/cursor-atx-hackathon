@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - heading "Scout" [level=1] [ref=e5]
+        - paragraph [ref=e6]: six agents, one graph
+      - paragraph [ref=e7]: not a list of blue links — a graph that grows while you watch.
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e10]:
+          - generic [ref=e11]: Query
+          - textbox "Query" [ref=e12]: is fusion power actually close?
+        - button "Search" [ref=e13] [cursor=pointer]
+      - paragraph [ref=e14]: enter a query to begin
+    - generic [ref=e16]:
+      - paragraph: submit a query to grow the graph
+    - paragraph [ref=e18]:
+      - generic [ref=e19]: live stream from /api/search · layout toggle lands in phase 8
+      - generic [ref=e20]: branch nodes fade in as each agent resolves
+  - alert [ref=e21]

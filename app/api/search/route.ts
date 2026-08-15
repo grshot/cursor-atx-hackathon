@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 const encoder = new TextEncoder();
 
 /**
- * SSE wire format for Phase 7 (`hooks/useSearchStream.ts`):
+ * SSE wire format for Phase 7 (`hooks/useScoutSession.ts`):
  *   event: <GraphEvent.type>
  *   data: <GraphEvent JSON>
  *
