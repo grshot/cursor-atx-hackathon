@@ -50,6 +50,16 @@ export async function* orchestrate(
     return;
   }
 
+  // Lets the client label the three angle agents (and its pending
+  // placeholders) with the actual sub-query text as soon as it exists.
+  yield { type: "subqueries_ready", queryId, subQueries };
+
+  const subQueryByAgent: Partial<Record<AgentType, string>> = {
+    query1: subQueries[0],
+    query2: subQueries[1],
+    query3: subQueries[2],
+  };
+
   const tasks: { agentType: AgentType; run: () => Promise<AgentResult> }[] = [
     { agentType: "web", run: () => webAgent(subQueries, signal) },
     { agentType: "x", run: () => xAgent(subQueries, signal) },
@@ -79,6 +89,7 @@ export async function* orchestrate(
         kind: "branch",
         status: "ok",
         agentType: outcome.agentType,
+        subQuery: subQueryByAgent[outcome.agentType],
         synthesis: outcome.result.synthesis,
         citations: outcome.result.citations,
         citationCount: outcome.result.citationCount,
