@@ -191,24 +191,24 @@ Phase 0 is otherwise closed out — proceeding to Phase 1.
 ## Phase 6 — Next.js SSE API Route
 
 **Owner:** Teammate A
-**PR:** _(link once opened)_
+**PR:** [#16](https://github.com/grshot/cursor-atx-hackathon/pull/16) (merged)
 **Goal:** HTTP endpoint that drains `orchestrate()` and streams each event to the client as SSE — the backend half of Scout's web app entry point.
 **Estimated diff:** ~120 lines across 1–2 files
 
 ### Checklist
-- [ ] `app/api/search/route.ts` — POST handler: takes `{ query }`, opens an SSE stream, pushes each `GraphEvent` from `orchestrate()` as it's yielded, closes the stream on `done`
-- [ ] Handle client disconnect (abort the underlying `orchestrate()` generator if the SSE connection closes early)
-- [ ] Open PR and verify via `curl -N` that events stream incrementally, not all at once
+- [x] `app/api/search/route.ts` — POST handler: takes `{ query }`, opens an SSE stream, pushes each `GraphEvent` from `orchestrate()` as it's yielded, closes the stream on `done`
+- [x] Handle client disconnect (abort the underlying `orchestrate()` generator if the SSE connection closes early) — `request.signal.aborted` checked in `pull()`, `iterator.return(undefined)` called on both abort and `cancel()`
+- [x] Open PR and verify via `curl -N` that events stream incrementally, not all at once — verified: `center_pulse` arrives immediately, well before the ~145s full-drain time observed in Phase 3
 
 ### Definition of Done
-- [ ] `curl -N` against the route shows events arriving incrementally as agents resolve, not buffered until the end
-- [ ] Route imports `orchestrate()` from the shared module — no duplicated fan-out logic
-- [ ] An `agent_error` event does not terminate the stream early
+- [x] `curl -N` against the route shows events arriving incrementally as agents resolve, not buffered until the end
+- [x] Route imports `orchestrate()` from the shared module — no duplicated fan-out logic
+- [x] An `agent_error` event does not terminate the stream early — it's enqueued like any other `GraphEvent`; only `done` or client abort ends the stream
 
 > **Note to implementing agent:** run `/compact` after this phase merges. Before compacting, retain in working notes:
-> - Exact SSE framing used (event name / data format) — Phase 7's client-side `EventSource`/fetch-stream parser must match this exactly
-> - Route path (`/api/search`) and request body shape (`{ query: string }`)
-> - How `agent_error` events are represented on the wire — Phase 7 needs this to render error-state nodes
+> - SSE framing actually shipped: `event: <GraphEvent.type>\ndata: <GraphEvent JSON>\n\n` — Phase 7's client-side parser must match this exactly
+> - Route path (`/api/search`), method `POST`, request body `{ query: string }` (trimmed; 400 if empty/missing)
+> - `agent_error` is a normal SSE event on this stream (not an HTTP error status) — Phase 7 needs to listen for the `agent_error` event name specifically to render error-state nodes
 
 ## Phase 7 — React Flow Canvas: Center + Branch Nodes, Live Streaming
 
