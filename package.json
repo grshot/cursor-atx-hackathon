@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "oracle": "node --test --test-concurrency=1 \"tests/oracle/*.test.ts\""
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
