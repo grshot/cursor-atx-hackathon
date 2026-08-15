@@ -4,7 +4,7 @@
 set -e
 cd "$(dirname "$0")/.."
 if [ -z "$GROK_API_KEY" ]; then
-  GROK_API_KEY=$(security find-generic-password -a "username" -s "xai_api" -w)
+  GROK_API_KEY=$(security find-generic-password -a "$USER" -s "xai_api" -w)
   export GROK_API_KEY
 fi
 exec npx tsx --tsconfig tsconfig.json mcp-server/index.ts

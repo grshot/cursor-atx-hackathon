@@ -45,6 +45,15 @@ export function assembleScoutGraph(events: GraphEvent[]): ScoutGraph {
         }
         break;
       }
+      case "center_preview": {
+        const center = nodesById.get("center") ?? {
+          id: "center",
+          kind: "center" as const,
+          status: "pending" as const,
+        };
+        nodesById.set("center", { ...center, synthesis: event.synthesis });
+        break;
+      }
       case "center_updated": {
         const center = nodesById.get("center") ?? {
           id: "center",
@@ -58,6 +67,7 @@ export function assembleScoutGraph(events: GraphEvent[]): ScoutGraph {
         });
         break;
       }
+      case "subqueries_ready":
       case "done":
         break;
       default: {

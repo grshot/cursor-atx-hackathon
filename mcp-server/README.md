@@ -4,7 +4,7 @@ Local stdio MCP server that exposes Scout as one Cursor tool: `scout_search(quer
 
 It drains the shared `orchestrate()` generator (same module as the Next.js app). It does not reimplement fan-out. It is world search only — Cursor's host agent already has repo `semSearch`.
 
-This process is **not hosted**. Cursor on the demo machine spawns it. Do not add an HTTP MCP URL.
+Tool registration is shared code (`mcp-server/server.ts`): both this stdio process and the hosted HTTP endpoint (`app/api/mcp/route.ts`) call the same `createScoutServer()`.
 
 ## Run (dev)
 
@@ -40,6 +40,25 @@ Add to Cursor MCP settings. Set `cwd` to this repo root. Do not put the API key 
 
 After Phase 2/3 replace the stub `orchestrate()`, this tool returns live graph data with no MCP code change.
 
+## Hosted (HTTP)
+
+`app/api/mcp/route.ts` exposes the same `scout_search` tool over Streamable HTTP for machines that can't spawn the stdio process. It requires a bearer token — set `SCOUT_MCP_TOKEN` in the Vercel project env (same value used below), plus `GROK_API_KEY` and `SEMANTIC_SCHOLAR_API_KEY`.
+
+```json
+{
+  "mcpServers": {
+    "scout-hosted": {
+      "url": "https://scoutsearch.vercel.app/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:SCOUT_MCP_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+Anyone holding the token can spend the Grok/Semantic Scholar keys through this endpoint — treat it like a credential, not a config value.
+
 ## Built start
 
 ```bash
@@ -50,6 +69,7 @@ cd mcp-server && npm run build && npm start
 
 ## Security
 
-- Stdio only; no unauthenticated HTTP surface.
-- The tool may call Grok (`GROK_API_KEY`) and optionally Semantic Scholar. Anyone who can talk to this Cursor MCP can spend those keys.
-- Do not log secrets. Do not put keys in the repo.
+- Local (`index.ts`, stdio): no HTTP surface, Keychain-backed keys, nothing to authenticate — process access is the trust boundary.
+- Hosted (`app/api/mcp`): public HTTP, so it requires a bearer token (`SCOUT_MCP_TOKEN`); requests without a matching `Authorization` header get a 401 before `orchestrate()` runs.
+- Either path: the tool calls Grok (`GROK_API_KEY`) and optionally Semantic Scholar. Anyone who can talk to it — locally via stdio, or remotely with the bearer token — can spend those keys.
+- Do not log secrets. Do not put keys or the bearer token in the repo.
