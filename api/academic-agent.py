@@ -9,6 +9,7 @@ import urllib.request
 S2_SEARCH = "https://api.semanticscholar.org/graph/v1/paper/search"
 S2_FIELDS = "paperId,title,url,abstract,year,venue,citationCount"
 PAPER_PAGE = "https://www.semanticscholar.org/paper/"
+OPENALEX_SEARCH = "https://api.openalex.org/works"
 
 
 def _api_key():
@@ -55,6 +56,56 @@ def search_papers(query):
         return None, str(err)
 
 
+def _rebuild_abstract(inverted):
+    # OpenAlex ships abstracts as {word: [positions]} — flatten back to text.
+    if not isinstance(inverted, dict) or not inverted:
+        return ""
+    positions = {}
+    for word, indexes in inverted.items():
+        for index in indexes:
+            positions[index] = word
+    return " ".join(positions[i] for i in sorted(positions))[:1200]
+
+
+def _openalex_search(query):
+    params = urllib.parse.urlencode({"search": query, "per-page": "5"})
+    req = urllib.request.Request(
+        f"{OPENALEX_SEARCH}?{params}",
+        headers={"User-Agent": "scout-academic-agent"},
+    )
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        payload = json.loads(resp.read().decode())
+    papers = []
+    for work in payload.get("results") or []:
+        title = work.get("display_name") or work.get("title")
+        primary = work.get("primary_location") or {}
+        url = work.get("doi") or primary.get("landing_page_url") or work.get("id")
+        if not title or not url:
+            continue
+        papers.append(
+            {
+                "paperId": work.get("id") or url,
+                "title": title,
+                "url": url,
+                "abstract": _rebuild_abstract(work.get("abstract_inverted_index")),
+            }
+        )
+    return {"data": papers}
+
+
+def search_papers_any(query):
+    payload, error = search_papers(query)
+    if payload:
+        return payload, None
+    # Semantic Scholar refused (anonymous 429s from shared egress IPs, or a
+    # dead key) — OpenAlex needs no auth and has generous limits, so fall
+    # back per query instead of failing the whole agent.
+    try:
+        return _openalex_search(query), None
+    except Exception as fallback_err:
+        return None, f"s2: {error}; openalex: {fallback_err}"
+
+
 def paper_url(paper):
     url = paper.get("url")
     if isinstance(url, str) and url:
@@ -84,7 +135,7 @@ def run_academic_agent(sub_queries):
     papers_by_id = {}
     failures = []
     for query in sub_queries:
-        payload, error = search_papers(query)
+        payload, error = search_papers_any(query)
         if error or not payload:
             failures.append(error or "empty response")
             continue
