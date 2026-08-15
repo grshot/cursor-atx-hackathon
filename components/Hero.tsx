@@ -6,6 +6,7 @@ import { SearchInput } from "@/components/SearchInput";
 
 type Props = {
   onSearch: (query: string) => void;
+  onHome: () => void;
 };
 
 const QUESTION_POOL = [
@@ -52,7 +53,7 @@ function pickThree(): string[] {
   return pool.slice(0, 3);
 }
 
-export function Hero({ onSearch }: Props) {
+export function Hero({ onSearch, onHome }: Props) {
   // Random picks happen after mount (inside a rAF, keeping hydration clean) —
   // the fallback trio is only ever visible for a frame, under the chips'
   // entrance-animation delay.
@@ -66,15 +67,22 @@ export function Hero({ onSearch }: Props) {
   return (
     <section className="hero">
       <div className="hero-inner">
-        <Image
-          className="hero-logo"
-          src="/scout-logo.png"
-          alt="Scout — a fox with a magnifying glass"
-          width={108}
-          height={108}
-          priority
-        />
-        <h1 className="wordmark">scout</h1>
+        <button
+          type="button"
+          className="hero-brand"
+          onClick={onHome}
+          aria-label="Scout home"
+        >
+          <Image
+            className="hero-logo"
+            src="/scout-logo.png"
+            alt="Scout — a fox with a magnifying glass"
+            width={108}
+            height={108}
+            priority
+          />
+          <h1 className="wordmark">scout</h1>
+        </button>
         <p className="hero-tag">
           ask a question. send out the scouts.
         </p>
@@ -92,7 +100,26 @@ export function Hero({ onSearch }: Props) {
           ))}
         </div>
         <p className="hero-foot">
-          web × x × academic · live-streamed as agents resolve
+          <span>web × x × academic · powered by</span>
+          <a
+            href="https://cursor.com"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Cursor"
+            title="Cursor"
+          >
+            <span className="brand-mark mark-cursor" />
+          </a>
+          <span>&amp;</span>
+          <a
+            href="https://grok.com"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Grok"
+            title="Grok"
+          >
+            <span className="brand-mark mark-grok" />
+          </a>
         </p>
       </div>
     </section>

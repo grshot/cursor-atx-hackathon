@@ -14,6 +14,11 @@ export default function Home() {
   const [layout, setLayout] = useState<GraphLayout>("source");
   const started = session.searches.length > 0;
 
+  const goHome = () => {
+    session.reset();
+    setLayout("source");
+  };
+
   return (
     <main className={started ? "app mode-canvas" : "app mode-landing"}>
       <Aurora dim={started} />
@@ -25,11 +30,12 @@ export default function Home() {
             layout={layout}
             onLayoutChange={setLayout}
             onSearch={session.search}
+            onHome={goHome}
           />
           <Constellation searches={session.searches} layout={layout} />
         </>
       ) : (
-        <Hero onSearch={session.search} />
+        <Hero onSearch={session.search} onHome={goHome} />
       )}
     </main>
   );

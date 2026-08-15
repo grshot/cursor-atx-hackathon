@@ -239,6 +239,16 @@ body {
   width: 100%;
 }
 
+.hero-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
 .hero-logo {
   border-radius: 26px;
   box-shadow:
@@ -315,6 +325,10 @@ body {
 }
 
 .hero-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   margin-top: 40px;
   font-family: var(--mono);
   font-weight: 500;
@@ -323,6 +337,36 @@ body {
   text-transform: uppercase;
   color: var(--text-faint);
   animation: rise-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.46s both;
+}
+
+/* inline brand marks, tinted like the surrounding text */
+.hero-foot a {
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+
+.brand-mark {
+  display: block;
+  width: 15px;
+  height: 15px;
+  flex: none;
+  background: var(--text-dim);
+  transition: background 0.2s ease;
+}
+
+.hero-foot a:hover .brand-mark {
+  background: var(--orange);
+}
+
+.mark-cursor {
+  mask: url("/cursor.svg") center / contain no-repeat;
+  -webkit-mask: url("/cursor.svg") center / contain no-repeat;
+}
+
+.mark-grok {
+  mask: url("/grok.svg") center / contain no-repeat;
+  -webkit-mask: url("/grok.svg") center / contain no-repeat;
 }
 
 @keyframes rise-in {
@@ -464,6 +508,18 @@ body {
   align-items: center;
   gap: 10px;
   flex: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.brand:hover img {
+  transform: scale(1.06);
+}
+
+.brand img {
+  transition: transform 0.2s ease;
 }
 
 .brand img {

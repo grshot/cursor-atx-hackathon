@@ -321,5 +321,13 @@ export function useScoutSession() {
     [commit, runMock, updateRecord],
   );
 
-  return { searches, search };
+  // Back to the landing hero: abort every in-flight stream (stops Grok
+  // spend server-side) and clear the map.
+  const reset = useCallback(() => {
+    controllersRef.current.forEach((controller) => controller.abort());
+    controllersRef.current.clear();
+    commit(() => []);
+  }, [commit]);
+
+  return { searches, search, reset };
 }
