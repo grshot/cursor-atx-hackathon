@@ -76,7 +76,7 @@ export function Hero({ onSearch }: Props) {
         />
         <h1 className="wordmark">scout</h1>
         <p className="hero-tag">
-          fan out. map back.
+          ask a question. send out the scouts.
         </p>
         <SearchInput variant="hero" onSubmitQuery={onSearch} />
         <div className="hero-chips">

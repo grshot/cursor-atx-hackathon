@@ -27,7 +27,7 @@ export function SearchInput({ variant, onSubmitQuery }: Props) {
         autoFocus={variant === "hero"}
         placeholder={
           variant === "hero"
-            ? "ask anything — the scouts fan out"
+            ? "what do you want scouted?"
             : "search again to grow the map…"
         }
         aria-label="Search query"
