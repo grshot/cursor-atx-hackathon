@@ -19,7 +19,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Scout — scouts fan out, one map comes back",
+  title: "Scout",
   description:
     "Agentic graph search: every query fans out to six live agents and grows a constellation of answers.",
 };
