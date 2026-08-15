@@ -14,10 +14,14 @@ See `specs/2032e2-agentic-graph-search.md` for the full spec and `plans/2032e2-a
    ```
    cp .env.local.example .env.local
    ```
-   - `GROK_API_KEY` — required. xAI API key (Grok 4.6, `web_search`, `x_search`).
-   - `SEMANTIC_SCHOLAR_API_KEY` — required for the academic agent (Phase 4). Anonymous access works for single-paper lookups but is rate-limited on `/paper/search`; get a free key at https://www.semanticscholar.org/product/api.
+   - `GROK_API_KEY` — required. xAI API key (Grok 4.6, `web_search`, `x_search`). Recommended Keychain lookup:
+     ```
+     GROK_API_KEY=$(security find-generic-password -a "username" -s "xai_api" -w)
+     ```
+     Write it into `.env.local`, or export it in the shell before `next dev` / `vercel dev`.
+   - `SEMANTIC_SCHOLAR_API_KEY` — optional. Raises Semantic Scholar `/paper/search` rate limits. Anonymous access may 429 on hackathon wifi; a bad key (403) is retried once without the header. If search still fails, the academic branch renders as an error node and the other five agents continue.
 
-   No other signups needed.
+   No other signups needed. Core demo runs with only `GROK_API_KEY`.
 
 3. Run the dev server:
    ```
