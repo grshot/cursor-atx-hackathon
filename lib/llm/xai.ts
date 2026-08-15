@@ -5,6 +5,11 @@
 const XAI_RESPONSES_URL = "https://api.x.ai/v1/responses";
 const MODEL = "grok-4.6";
 
+// Phase 0/3 measured real calls at 35–116s; anything past this is treated as
+// hung — the fetch aborts and the caller surfaces it as a normal agent_error
+// instead of holding the whole SSE stream open forever.
+const CALL_TIMEOUT_MS = 120_000;
+
 export type XaiTool = { type: "web_search" } | { type: "x_search" };
 
 export type XaiResponse = {
@@ -24,12 +29,17 @@ export type XaiResponse = {
   }>;
 };
 
-async function callResponses(input: string, tools?: XaiTool[]): Promise<XaiResponse> {
+async function callResponses(
+  input: string,
+  tools?: XaiTool[],
+  signal?: AbortSignal
+): Promise<XaiResponse> {
   const apiKey = process.env.GROK_API_KEY;
   if (!apiKey) {
     throw new Error("GROK_API_KEY is not set");
   }
 
+  const timeout = AbortSignal.timeout(CALL_TIMEOUT_MS);
   const res = await fetch(XAI_RESPONSES_URL, {
     method: "POST",
     headers: {
@@ -41,6 +51,7 @@ async function callResponses(input: string, tools?: XaiTool[]): Promise<XaiRespo
       input: [{ role: "user", content: input }],
       ...(tools ? { tools } : {}),
     }),
+    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
   });
 
   if (!res.ok) {

@@ -123,26 +123,27 @@ Phase 0 is otherwise closed out — proceeding to Phase 1.
 ## Phase 3 — Orchestration: Query Agents, Synthesis & Fan-out
 
 **Owner:** Viren
-**PR:** _(link once opened)_
+**PR:** [#17](https://github.com/grshot/cursor-atx-hackathon/pull/17)
 **Goal:** Wire the 3 query-agents, the final synthesis call, and the real 6-agent fan-out into `orchestrate()`, replacing the Phase 1 stub.
 **Estimated diff:** ~200 lines across 3 files
 
 ### Checklist
-- [ ] `lib/agents/queryAgent.ts` — runs `agentRunner` with `web_search` against exactly 1 sub-query (invoked 3x, once per sub-query angle)
-- [ ] `lib/orchestration/synthesis.ts` — final Grok call that takes all 6 `AgentResult`s and produces the center node's synthesized answer
-- [ ] `lib/orchestration/orchestrate.ts` — replace stub with real implementation: generate sub-queries → fan out all 6 agents concurrently → yield `branch_node_added` as each resolves → yield `agent_error` for any that fail (without blocking the rest) → after all 6 settle, run final synthesis → yield `center_updated` → yield `done`
-- [ ] Open PR and test end-to-end via a throwaway script that drains `orchestrate()` for a sample query
+- [x] `lib/agents/queryAgent.ts` — runs `agentRunner` with `web_search` against exactly 1 sub-query (invoked 3x, once per sub-query angle)
+- [x] `lib/orchestration/synthesis.ts` — final Grok call that takes all 6 `AgentResult`s and produces the center node's synthesized answer
+- [x] `lib/orchestration/orchestrate.ts` — replace stub with real implementation: generate sub-queries → fan out all 6 agents concurrently → yield `branch_node_added` as each resolves → yield `agent_error` for any that fail (without blocking the rest) → after all 6 settle, run final synthesis → yield `center_updated` → yield `done`
+- [x] Open PR and test end-to-end via a throwaway script that drains `orchestrate()` for a sample query — also pulled forward `lib/agents/academicAgent.ts` from Phase 4 (not yet started) so all 6 agents exist to fan out to
 
 ### Definition of Done
-- [ ] `orchestrate()` yields exactly 6 `branch_node_added`/`agent_error` events per query, then one `center_updated`, then `done`
-- [ ] A single failing agent (simulate by forcing an error) does not block the other 5 or the final synthesis
-- [ ] No adaptive fan-out — always exactly 6 agent calls regardless of query
+- [x] `orchestrate()` yields exactly 6 `branch_node_added`/`agent_error` events per query, then one `center_updated`, then `done` — verified live: 9 events total, correct sequence
+- [x] A single failing agent (simulate by forcing an error) does not block the other 5 or the final synthesis — verified via synthetic test (1 forced failure, other 5 completed)
+- [x] No adaptive fan-out — always exactly 6 agent calls regardless of query
 
 > **Note to implementing agent:** this phase's `orchestrate()` is the real integration point for Phase 6 (API route) and Phase 5 (MCP server). Note for Phase 9: /compact retaining:
-> - Final confirmed `orchestrate()` signature and full `GraphEvent` sequence per query
-> - Exact `agentType` discriminator values used per branch node (`'web' | 'x' | 'academic' | 'query1' | 'query2' | 'query3'` or whatever was actually used) — Phase 8's by-source/by-subtopic grouping depends on this
-> - How agent failures are represented in the event stream (`agent_error` payload shape actually shipped)
-> - Observed end-to-end latency for a full query (6 agents + synthesis) — relevant to Phase 7's "pulsing center node" UX and Phase 9's demo timing
+> - Confirmed `orchestrate(query: string): AsyncGenerator<GraphEvent>` signature, unchanged from Phase 1/`lib/types.ts`. Real event sequence for a live query: `center_pulse` → 6× `branch_node_added` in **completion order, not fixed order** (an `asCompleted()` helper races the 6 agent promises) → `center_updated` → `done` (9 events total)
+> - `agentType` discriminator values used exactly as in `lib/types.ts`: `'web' | 'x' | 'academic' | 'query1' | 'query2' | 'query3'` — Phase 8's by-source/by-subtopic grouping can rely on these literally
+> - `agent_error` payload shipped as `{ type: "agent_error", queryId, agentType, message: string }` — `message` is `error.message` if the failure was an `Error`, else `String(error)`
+> - `lib/agents/academicAgent.ts` was pulled forward from Phase 4 in this PR (POSTs to `api/academic-agent`, resolves base URL from `API_BASE_URL` env var, falling back to `VERCEL_URL` then `http://localhost:3000`) — Phase 4 only needs to replace the Python backend, not this wrapper, unless the contract needs to change
+> - Observed end-to-end latency for a live 6-agent fan-out + synthesis: **~145s** (academic resolved fastest at 19s, slowest branch at 116s, synthesis added ~29s on top) — this is the real number Phase 7's "pulsing center node" UX and Phase 9's demo timing need to plan around
 
 ## Phase 4 — Academic Agent (Python)
 
@@ -191,24 +192,24 @@ Phase 0 is otherwise closed out — proceeding to Phase 1.
 ## Phase 6 — Next.js SSE API Route
 
 **Owner:** Teammate A
-**PR:** _(link once opened)_
+**PR:** [#16](https://github.com/grshot/cursor-atx-hackathon/pull/16) (merged)
 **Goal:** HTTP endpoint that drains `orchestrate()` and streams each event to the client as SSE — the backend half of Scout's web app entry point.
 **Estimated diff:** ~120 lines across 1–2 files
 
 ### Checklist
-- [ ] `app/api/search/route.ts` — POST handler: takes `{ query }`, opens an SSE stream, pushes each `GraphEvent` from `orchestrate()` as it's yielded, closes the stream on `done`
-- [ ] Handle client disconnect (abort the underlying `orchestrate()` generator if the SSE connection closes early)
-- [ ] Open PR and verify via `curl -N` that events stream incrementally, not all at once
+- [x] `app/api/search/route.ts` — POST handler: takes `{ query }`, opens an SSE stream, pushes each `GraphEvent` from `orchestrate()` as it's yielded, closes the stream on `done`
+- [x] Handle client disconnect (abort the underlying `orchestrate()` generator if the SSE connection closes early) — `request.signal.aborted` checked in `pull()`, `iterator.return(undefined)` called on both abort and `cancel()`
+- [x] Open PR and verify via `curl -N` that events stream incrementally, not all at once — verified: `center_pulse` arrives immediately, well before the ~145s full-drain time observed in Phase 3
 
 ### Definition of Done
-- [ ] `curl -N` against the route shows events arriving incrementally as agents resolve, not buffered until the end
-- [ ] Route imports `orchestrate()` from the shared module — no duplicated fan-out logic
-- [ ] An `agent_error` event does not terminate the stream early
+- [x] `curl -N` against the route shows events arriving incrementally as agents resolve, not buffered until the end
+- [x] Route imports `orchestrate()` from the shared module — no duplicated fan-out logic
+- [x] An `agent_error` event does not terminate the stream early — it's enqueued like any other `GraphEvent`; only `done` or client abort ends the stream
 
 > **Note to implementing agent:** run `/compact` after this phase merges. Before compacting, retain in working notes:
-> - Exact SSE framing used (event name / data format) — Phase 7's client-side `EventSource`/fetch-stream parser must match this exactly
-> - Route path (`/api/search`) and request body shape (`{ query: string }`)
-> - How `agent_error` events are represented on the wire — Phase 7 needs this to render error-state nodes
+> - SSE framing actually shipped: `event: <GraphEvent.type>\ndata: <GraphEvent JSON>\n\n` — Phase 7's client-side parser must match this exactly
+> - Route path (`/api/search`), method `POST`, request body `{ query: string }` (trimmed; 400 if empty/missing)
+> - `agent_error` is a normal SSE event on this stream (not an HTTP error status) — Phase 7 needs to listen for the `agent_error` event name specifically to render error-state nodes
 
 ## Phase 7 — React Flow Canvas: Center + Branch Nodes, Live Streaming
 
