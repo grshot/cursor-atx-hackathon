@@ -10,9 +10,10 @@ type Props = {
   layout: GraphLayout;
   onLayoutChange: (layout: GraphLayout) => void;
   onSearch: (query: string) => void;
+  onHome: () => void;
 };
 
-export function TopBar({ searches, layout, onLayoutChange, onSearch }: Props) {
+export function TopBar({ searches, layout, onLayoutChange, onSearch, onHome }: Props) {
   const streaming = searches.some((s) => s.status === "streaming");
   const status = streaming
     ? "scouts out — agents resolving"
@@ -20,10 +21,15 @@ export function TopBar({ searches, layout, onLayoutChange, onSearch }: Props) {
 
   return (
     <header className="topbar">
-      <div className="brand">
+      <button
+        type="button"
+        className="brand"
+        onClick={onHome}
+        aria-label="Back to the Scout homepage"
+      >
         <Image src="/scout-logo.png" alt="Scout" width={34} height={34} />
         <span className="brand-name">scout</span>
-      </div>
+      </button>
       <SearchInput variant="bar" onSubmitQuery={onSearch} />
       <div className="layout-toggle" role="group" aria-label="Graph grouping">
         <button

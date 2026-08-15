@@ -14,3 +14,4 @@ __pycache__/
 .vercel
 
 github_issues/*
+.env*

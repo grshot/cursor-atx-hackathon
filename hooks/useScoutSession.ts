@@ -100,6 +100,16 @@ function applyEvent(record: SearchRecord, event: GraphEvent): SearchRecord {
           errorNode(record.id, event.agentType, event.message),
         ),
       };
+    case "center_preview":
+      // Preliminary no-tools answer: fills the center fast but keeps status
+      // "pending" so the UI labels it a quick take until the real synthesis.
+      return {
+        ...record,
+        center:
+          record.center.status === "ok"
+            ? record.center
+            : { ...record.center, synthesis: event.synthesis },
+      };
     case "center_updated":
       return {
         ...record,
@@ -188,6 +198,11 @@ export function useScoutSession() {
           updateRecord(id, (record) => applyEvent(record, event));
         }, delay);
       };
+      emit(900, {
+        type: "center_preview",
+        queryId: id,
+        synthesis: `Quick take on “${query}”: from what's already known, the short answer is nuanced — real progress exists but the headline claims outrun it. The scouts are out verifying this against live web, X, and academic sources right now.`,
+      });
       emit(350, {
         type: "subqueries_ready",
         queryId: id,
@@ -306,5 +321,13 @@ export function useScoutSession() {
     [commit, runMock, updateRecord],
   );
 
-  return { searches, search };
+  // Back to the landing hero: abort every in-flight stream (stops Grok
+  // spend server-side) and clear the map.
+  const reset = useCallback(() => {
+    controllersRef.current.forEach((controller) => controller.abort());
+    controllersRef.current.clear();
+    commit(() => []);
+  }, [commit]);
+
+  return { searches, search, reset };
 }

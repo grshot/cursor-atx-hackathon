@@ -287,51 +287,71 @@ export type CrossLink = {
 export function computeCrossLinks(
   searches: { id: string; branches: GraphNode[] }[],
 ): CrossLink[] {
-  const links: CrossLink[] = [];
-  const tokenCache = new Map<string, Set<string>>();
-  const tokensFor = (node: GraphNode): Set<string> => {
-    let tokens = tokenCache.get(node.id);
-    if (!tokens) {
-      tokens = significantTokens(node.synthesis ?? "");
-      tokenCache.set(node.id, tokens);
-    }
-    return tokens;
+  type Doc = {
+    searchIndex: number;
+    searchId: string;
+    nodeId: string;
+    tokens: Set<string>;
   };
-
-  for (let j = 1; j < searches.length; j++) {
-    for (const branch of searches[j].branches) {
+  const docs: Doc[] = [];
+  searches.forEach((search, searchIndex) => {
+    for (const branch of search.branches) {
       if (branch.status !== "ok" || !branch.synthesis) continue;
-      const branchTokens = tokensFor(branch);
-      if (branchTokens.size === 0) continue;
-
-      let best: CrossLink | null = null;
-      let bestShared = 0;
-      let bestSim = 0;
-      for (let i = 0; i < j; i++) {
-        for (const other of searches[i].branches) {
-          if (other.status !== "ok" || !other.synthesis) continue;
-          const otherTokens = tokensFor(other);
-          if (otherTokens.size === 0) continue;
-          let shared = 0;
-          for (const token of branchTokens) {
-            if (otherTokens.has(token)) shared += 1;
-          }
-          const sim = shared / Math.min(branchTokens.size, otherTokens.size);
-          if (shared > bestShared || (shared === bestShared && sim > bestSim)) {
-            bestShared = shared;
-            bestSim = sim;
-            best = {
-              fromSearchId: searches[i].id,
-              fromNodeId: other.id,
-              toSearchId: searches[j].id,
-              toNodeId: branch.id,
-            };
-          }
-        }
+      const tokens = significantTokens(branch.synthesis);
+      if (tokens.size > 0) {
+        docs.push({ searchIndex, searchId: search.id, nodeId: branch.id, tokens });
       }
-      if (best && bestShared >= 4 && bestSim >= 0.22) links.push(best);
+    }
+  });
+  if (docs.length < 2) return [];
+
+  // Session-wide inverse document frequency: vocabulary that appears in most
+  // branches (the query topic itself, template phrasing) weighs ~0, so a
+  // thread requires genuinely distinctive shared content — not just two
+  // branches being about the same broad subject.
+  const docFreq = new Map<string, number>();
+  for (const doc of docs) {
+    for (const token of doc.tokens) {
+      docFreq.set(token, (docFreq.get(token) ?? 0) + 1);
     }
   }
+  const idf = (token: string) =>
+    Math.log(docs.length / (docFreq.get(token) ?? docs.length));
+  const selfWeights = docs.map((doc) => {
+    let weight = 0;
+    for (const token of doc.tokens) weight += idf(token);
+    return weight;
+  });
+
+  const links: CrossLink[] = [];
+  docs.forEach((doc, di) => {
+    let best: CrossLink | null = null;
+    let bestScore = 0;
+    docs.forEach((other, oi) => {
+      // Only link back to strictly older searches.
+      if (other.searchIndex >= doc.searchIndex) return;
+      let sharedWeight = 0;
+      let distinctiveCount = 0;
+      for (const token of doc.tokens) {
+        if (!other.tokens.has(token)) continue;
+        const weight = idf(token);
+        sharedWeight += weight;
+        // idf >= 1 ≈ token appears in fewer than ~37% of all branches.
+        if (weight >= 1) distinctiveCount += 1;
+      }
+      const ratio = sharedWeight / (Math.min(selfWeights[di], selfWeights[oi]) || 1);
+      if (distinctiveCount >= 3 && ratio >= 0.2 && sharedWeight > bestScore) {
+        bestScore = sharedWeight;
+        best = {
+          fromSearchId: other.searchId,
+          fromNodeId: other.nodeId,
+          toSearchId: doc.searchId,
+          toNodeId: doc.nodeId,
+        };
+      }
+    });
+    if (best) links.push(best);
+  });
   return links;
 }
 

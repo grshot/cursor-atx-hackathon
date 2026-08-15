@@ -1,5 +1,6 @@
 import type { AgentType, AgentResult, GraphEvent, GraphNode } from "@/lib/types";
 import { generateSubQueries } from "@/lib/orchestration/subquery";
+import { quickTake } from "@/lib/orchestration/quickTake";
 import { synthesize } from "@/lib/orchestration/synthesis";
 import { webAgent } from "@/lib/agents/webAgent";
 import { xAgent } from "@/lib/agents/xAgent";
@@ -36,9 +37,41 @@ export async function* orchestrate(
   const queryId = `q-${Date.now()}`;
   yield { type: "center_pulse", queryId, query };
 
+  // Fast first-take for the center node: a no-tools Grok call fired at t=0,
+  // raced against sub-query generation (and, if still pending, against the
+  // agent fan-out) so the user sees an answer in seconds instead of minutes.
+  // The final synthesis replaces it; a failed quick take is silently dropped.
+  type PreOutcome =
+    | { kind: "preview"; text: string }
+    | { kind: "preview_failed" }
+    | { kind: "subs"; value: [string, string, string] };
+  const previewPromise: Promise<PreOutcome> = quickTake(query, signal).then(
+    (text): PreOutcome => ({ kind: "preview", text }),
+    (): PreOutcome => ({ kind: "preview_failed" }),
+  );
+
   let subQueries: [string, string, string];
+  let previewPending: Promise<PreOutcome> | null = previewPromise;
   try {
-    subQueries = await generateSubQueries(query, signal);
+    let subs: [string, string, string] | null = null;
+    for await (const item of asCompleted<PreOutcome>([
+      previewPromise,
+      generateSubQueries(query, signal).then(
+        (value): PreOutcome => ({ kind: "subs", value }),
+      ),
+    ])) {
+      if (item.kind === "preview") {
+        previewPending = null;
+        yield { type: "center_preview", queryId, synthesis: item.text };
+      } else if (item.kind === "preview_failed") {
+        previewPending = null;
+      } else {
+        subs = item.value;
+        break;
+      }
+    }
+    if (!subs) throw new Error("sub-query generation produced no result");
+    subQueries = subs;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     yield {
@@ -80,8 +113,19 @@ export async function* orchestrate(
     )
   );
 
+  // If the quick take is still in flight, let it race the agents so its
+  // event is emitted the moment it lands.
+  const raceSet: Promise<AgentOutcome | PreOutcome>[] = [...outcomes];
+  if (previewPending) raceSet.push(previewPending);
+
   const results: AgentResult[] = [];
-  for await (const outcome of asCompleted(outcomes)) {
+  for await (const outcome of asCompleted(raceSet)) {
+    if ("kind" in outcome) {
+      if (outcome.kind === "preview") {
+        yield { type: "center_preview", queryId, synthesis: outcome.text };
+      }
+      continue;
+    }
     if (outcome.status === "ok") {
       results.push(outcome.result);
       const node: GraphNode = {

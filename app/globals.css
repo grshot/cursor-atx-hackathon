@@ -239,6 +239,16 @@ body {
   width: 100%;
 }
 
+.hero-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
 .hero-logo {
   border-radius: 26px;
   box-shadow:
@@ -315,6 +325,10 @@ body {
 }
 
 .hero-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   margin-top: 40px;
   font-family: var(--mono);
   font-weight: 500;
@@ -323,6 +337,48 @@ body {
   text-transform: uppercase;
   color: var(--text-faint);
   animation: rise-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.46s both;
+}
+
+.foot-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.foot-link:hover {
+  color: var(--orange);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* inline brand marks, tinted like the surrounding text */
+.mark-link {
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+
+.brand-mark {
+  display: block;
+  width: 15px;
+  height: 15px;
+  flex: none;
+  background: var(--text-dim);
+  transition: background 0.2s ease;
+}
+
+.mark-link:hover .brand-mark {
+  background: var(--orange);
+}
+
+.mark-cursor {
+  mask: url("/cursor.svg") center / contain no-repeat;
+  -webkit-mask: url("/cursor.svg") center / contain no-repeat;
+}
+
+.mark-grok {
+  mask: url("/grok.svg") center / contain no-repeat;
+  -webkit-mask: url("/grok.svg") center / contain no-repeat;
 }
 
 @keyframes rise-in {
@@ -464,6 +520,18 @@ body {
   align-items: center;
   gap: 10px;
   flex: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.brand:hover img {
+  transform: scale(1.06);
+}
+
+.brand img {
+  transition: transform 0.2s ease;
 }
 
 .brand img {
@@ -475,7 +543,16 @@ body {
   font-weight: 700;
   font-size: 20px;
   letter-spacing: -0.02em;
-  color: var(--text);
+  background: linear-gradient(100deg, var(--cream) 30%, var(--sky) 62%, var(--orange-soft) 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+:root[data-theme="light"] .brand-name {
+  background: linear-gradient(100deg, var(--navy) 35%, #3e6ea8 65%, var(--orange) 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .topbar-status {
@@ -737,13 +814,24 @@ body {
 }
 
 .center-node.settled .thinking-text,
+.center-node.previewing .thinking-text,
 .center-node.failed .thinking-text {
   opacity: 0;
 }
 
 .center-node.settled .final-text,
+.center-node.previewing .final-text,
 .center-node.failed .final-text {
   opacity: 1;
+}
+
+/* quick take: readable but visibly provisional until the real synthesis */
+.center-node.previewing .final-text {
+  color: rgba(244, 236, 220, 0.78);
+}
+
+.center-node.previewing .center-kicker {
+  color: var(--orange-soft);
 }
 
 .center-node.failed {
