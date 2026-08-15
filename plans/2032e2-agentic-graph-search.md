@@ -99,7 +99,7 @@ Phase 0 is otherwise closed out — proceeding to Phase 1.
 ## Phase 2 — Orchestration: Sub-query Generation & Source Agents
 
 **Owner:** Viren
-**PR:** _(link once opened)_
+**PR:** [#15](https://github.com/grshot/cursor-atx-hackathon/pull/15)
 **Goal:** Real sub-query generation plus the web and X source agents, each conforming to the shared `AgentResult` contract.
 **Estimated diff:** ~220 lines across 4 files
 
