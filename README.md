@@ -41,6 +41,6 @@ See `specs/2032e2-agentic-graph-search.md` for the full spec and `plans/2032e2-a
 - `lib/orchestration/` — shared query orchestration (`orchestrate()`), imported by both the web app's API route and the MCP server
 - `lib/agents/` — the 6 retrieval agents
 - `api/academic-agent.py` — the one Python piece: Semantic Scholar-backed academic agent
-- `mcp-server/` — MCP server exposing `scout_search` as a Cursor-callable tool
+- `mcp-server/` — MCP server exposing `scout_search` as a Cursor-callable tool. See [`mcp-server/README.md`](mcp-server/README.md) for local stdio config.
 - `demo/index.html` — standalone visual mockup of the graph canvas; reference for Phase 7/8's real implementation
 - `docs/adr/` — architecture decisions (read before touching orchestration, retrieval, or layout)
