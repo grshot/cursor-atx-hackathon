@@ -276,11 +276,21 @@ export function useScoutSession() {
         return;
       }
 
+      // Session memory: prior completed searches ride along so the backend
+      // can build on (rather than repeat) what's already been explored.
+      const context = existing
+        .filter((r) => r.center.status === "ok" && r.center.synthesis)
+        .slice(-3)
+        .map((r) => ({
+          query: r.query,
+          synthesis: (r.center.synthesis ?? "").slice(0, 600),
+        }));
+
       try {
         const response = await fetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-          body: JSON.stringify({ query }),
+          body: JSON.stringify(context.length > 0 ? { query, context } : { query }),
           signal: controller.signal,
         });
 

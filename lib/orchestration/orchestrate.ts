@@ -1,4 +1,10 @@
-import type { AgentType, AgentResult, GraphEvent, GraphNode } from "@/lib/types";
+import type {
+  AgentType,
+  AgentResult,
+  GraphEvent,
+  GraphNode,
+  SessionContext,
+} from "@/lib/types";
 import { generateSubQueries } from "@/lib/orchestration/subquery";
 import { quickTake } from "@/lib/orchestration/quickTake";
 import { synthesize } from "@/lib/orchestration/synthesis";
@@ -31,9 +37,10 @@ async function* asCompleted<T>(promises: Promise<T>[]): AsyncGenerator<T> {
 // upstream calls so an abandoned query stops burning Grok spend.
 export async function* orchestrate(
   query: string,
-  options?: { signal?: AbortSignal }
+  options?: { signal?: AbortSignal; context?: SessionContext }
 ): AsyncGenerator<GraphEvent> {
   const signal = options?.signal;
+  const context = options?.context;
   const queryId = `q-${Date.now()}`;
   yield { type: "center_pulse", queryId, query };
 
@@ -45,7 +52,7 @@ export async function* orchestrate(
     | { kind: "preview"; text: string }
     | { kind: "preview_failed" }
     | { kind: "subs"; value: [string, string, string] };
-  const previewPromise: Promise<PreOutcome> = quickTake(query, signal).then(
+  const previewPromise: Promise<PreOutcome> = quickTake(query, signal, context).then(
     (text): PreOutcome => ({ kind: "preview", text }),
     (): PreOutcome => ({ kind: "preview_failed" }),
   );
@@ -56,7 +63,7 @@ export async function* orchestrate(
     let subs: [string, string, string] | null = null;
     for await (const item of asCompleted<PreOutcome>([
       previewPromise,
-      generateSubQueries(query, signal).then(
+      generateSubQueries(query, signal, context).then(
         (value): PreOutcome => ({ kind: "subs", value }),
       ),
     ])) {
@@ -158,7 +165,7 @@ export async function* orchestrate(
     synthesis = "All agents failed to return results for this query.";
   } else {
     try {
-      synthesis = await synthesize(query, results, signal);
+      synthesis = await synthesize(query, results, signal, context);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       synthesis = `Final synthesis failed (${message}) — the ${results.length} branch nodes above each carry their own synthesized findings and citations.`;

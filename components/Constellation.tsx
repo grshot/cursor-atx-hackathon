@@ -12,7 +12,7 @@ import {
 } from "@/lib/constellation";
 import type { SearchRecord } from "@/hooks/useScoutSession";
 import { BranchNode, branchGroupColor } from "@/components/BranchNode";
-import { shortLabel } from "@/lib/format";
+import { angleLabel } from "@/lib/format";
 import { CenterNode } from "@/components/CenterNode";
 import { DetailPanel } from "@/components/DetailPanel";
 
@@ -160,6 +160,29 @@ export function Constellation({ searches, layout }: Props) {
 
   const crossLinks = useMemo(() => computeCrossLinks(searches), [searches]);
 
+  const halosById = useMemo(
+    () =>
+      new Map(
+        searches.map((record) => [
+          record.id,
+          groupHalos(
+            record.origin,
+            record.branches,
+            positionsById.get(record.id) ?? [],
+            layout,
+            record.subQueries
+              ? (record.subQueries.map((q) => angleLabel(q, record.query)) as [
+                  string,
+                  string,
+                  string,
+                ])
+              : null,
+          ),
+        ]),
+      ),
+    [searches, positionsById, layout],
+  );
+
   const nodePoint = useCallback(
     (searchId: string, nodeId: string): WorldPoint | null => {
       const record = recordsById.get(searchId);
@@ -205,47 +228,22 @@ export function Constellation({ searches, layout }: Props) {
     >
       <div className="world" ref={worldRef}>
         <svg className="world-lines" aria-hidden>
-          {searches.map((record) => {
-            const positions = positionsById.get(record.id) ?? [];
-            return (
-              <g key={`halo-${record.id}`}>
-                {groupHalos(
-                  record.origin,
-                  record.branches,
-                  positions,
-                  layout,
-                  record.subQueries
-                    ? (record.subQueries.map((q) => shortLabel(q, 30)) as [
-                        string,
-                        string,
-                        string,
-                      ])
-                    : null,
-                ).map((halo) => (
-                  <g key={`${record.id}:${halo.label}`}>
-                    <ellipse
-                      className="group-halo"
-                      cx={halo.cx}
-                      cy={halo.cy}
-                      rx={halo.rx}
-                      ry={halo.ry}
-                      transform={`rotate(${halo.rotateDeg.toFixed(1)} ${halo.cx.toFixed(1)} ${halo.cy.toFixed(1)})`}
-                      style={{ fill: halo.color, stroke: halo.color }}
-                    />
-                    <text
-                      className="group-halo-label"
-                      x={halo.labelX}
-                      y={halo.labelY}
-                      textAnchor="middle"
-                      style={{ fill: halo.color }}
-                    >
-                      {halo.label}
-                    </text>
-                  </g>
-                ))}
-              </g>
-            );
-          })}
+          {searches.map((record) => (
+            <g key={`halo-${record.id}`}>
+              {(halosById.get(record.id) ?? []).map((halo) => (
+                <ellipse
+                  key={`${record.id}:${halo.label}`}
+                  className="group-halo"
+                  cx={halo.cx}
+                  cy={halo.cy}
+                  rx={halo.rx}
+                  ry={halo.ry}
+                  transform={`rotate(${halo.rotateDeg.toFixed(1)} ${halo.cx.toFixed(1)} ${halo.cy.toFixed(1)})`}
+                  style={{ fill: halo.color, stroke: halo.color }}
+                />
+              ))}
+            </g>
+          ))}
           {crossLinks.map((link) => {
             const from = nodePoint(link.fromSearchId, link.fromNodeId);
             const to = nodePoint(link.toSearchId, link.toNodeId);
@@ -282,6 +280,19 @@ export function Constellation({ searches, layout }: Props) {
             );
           })}
         </svg>
+        {/* halo captions live in the DOM layer, above cards, so a
+            neighboring card can never hide them */}
+        {searches.map((record) =>
+          (halosById.get(record.id) ?? []).map((halo) => (
+            <span
+              key={`label-${record.id}:${halo.label}`}
+              className="halo-label"
+              style={{ left: halo.labelX, top: halo.labelY, color: halo.color }}
+            >
+              {halo.label}
+            </span>
+          )),
+        )}
         {searches.map((record) => {
           const positions = positionsById.get(record.id) ?? [];
           return (

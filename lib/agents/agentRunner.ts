@@ -1,5 +1,5 @@
 import type { AgentResult, Citation } from "@/lib/types";
-import { xai, extractMessage } from "@/lib/llm/xai";
+import { xai, extractMessage, FAST_MODEL } from "@/lib/llm/xai";
 
 // Shared retrieval-agent helper: fires one Grok Responses API tool call
 // (web_search or x_search) covering all of subQueries in a single request,
@@ -11,7 +11,7 @@ export async function agentRunner(
   signal?: AbortSignal
 ): Promise<AgentResult> {
   const prompt = buildPrompt(subQueries);
-  const response = await xai.callResponses(prompt, [{ type: tool }], signal);
+  const response = await xai.callResponses(prompt, [{ type: tool }], signal, FAST_MODEL);
   const { text, annotations } = extractMessage(response);
 
   const source = tool === "web_search" ? "web" : "x";
