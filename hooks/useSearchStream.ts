@@ -69,7 +69,13 @@ function parseSseBlock(block: string): GraphEvent | null {
     if (trimmed.startsWith("data: ")) data = trimmed.slice(6);
   }
   if (!data) return null;
-  return JSON.parse(data) as GraphEvent;
+  // One malformed frame must not throw the whole stream into the error state
+  // — skip it and keep consuming; later events still render.
+  try {
+    return JSON.parse(data) as GraphEvent;
+  } catch {
+    return null;
+  }
 }
 
 export function useSearchStream() {
