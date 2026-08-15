@@ -1,4 +1,4 @@
-# Agentic Graph Search
+# Scout
 
 A query-to-graph search product: six retrieval agents fan out into branch nodes around one synthesized center node. Cursor’s host agent already indexes the workspace; this product searches the web, X, and academic papers.
 
@@ -58,7 +58,7 @@ _Avoid_: commit SHA (that is Cursor’s index, not ours)
 
 Dev: A judge types a query in Cursor. What runs?
 
-Domain: The **host agent** may `semSearch` the repo via TurboPuffer. In parallel it can call MCP `agentic_graph_search`, which starts a **query snapshot**.
+Domain: The **host agent** may `semSearch` the repo via TurboPuffer. In parallel it can call MCP `scout_search`, which starts a **query snapshot**.
 
 Dev: Does that snapshot include repo chunks?
 

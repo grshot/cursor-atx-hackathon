@@ -4,7 +4,7 @@ Cursor indexes workspaces with a Merkle tree of file hashes and stores chunk emb
 
 **Status:** accepted
 
-**Decision:** MCP `agentic_graph_search` is world-search only. Cursor’s index remains the repo. Node IDs + `queryId` are the only Merkle analogue (stable identity, one snapshot per run). Layout toggles reposition the same nodes; they do not re-query. Do not persist a citation Merkle store.
+**Decision:** MCP `scout_search` is world-search only. Cursor’s index remains the repo. Node IDs + `queryId` are the only Merkle analogue (stable identity, one snapshot per run). Layout toggles reposition the same nodes; they do not re-query. Do not persist a citation Merkle store.
 
 **Considered Options:** (1) TurboPuffer in-app (2) local embeddings (3) compose via host agent — chose 3.
 

@@ -1,6 +1,6 @@
 ```
 prefix: 2032e2
-title: Agentic Graph Search — Cursor hackathon MVP
+title: Scout — Cursor hackathon MVP
 issue: none
 jira: none
 requester: Viren Khandal
@@ -12,7 +12,7 @@ links: none
 
 ## Goal
 
-A search product where the primary interface is a live-populating node-edge graph, not a results list. A query produces a center node holding an AI-synthesized answer, surrounded by branch nodes that are peers of that answer rather than footnotes to it — each branch is itself a synthesized mini-answer backed by real citations, expandable into its raw sources. Two toggleable layouts read the same underlying result set: by-source (web / X / academic) and by-subtopic (query angle). The same search orchestration is also callable as an MCP tool from inside Cursor's agent chat, satisfying the hackathon's Cursor-integration requirement. Grok 4.6 is the reasoning and retrieval engine throughout, not a bolted-on option.
+**Scout** — a search product where the primary interface is a live-populating node-edge graph, not a results list. A query produces a center node holding an AI-synthesized answer, surrounded by branch nodes that are peers of that answer rather than footnotes to it — each branch is itself a synthesized mini-answer backed by real citations, expandable into its raw sources. Two toggleable layouts read the same underlying result set: by-source (web / X / academic) and by-subtopic (query angle). The same search orchestration is also callable as an MCP tool from inside Cursor's agent chat, satisfying the hackathon's Cursor-integration requirement. Grok 4.6 is the reasoning and retrieval engine throughout, not a bolted-on option.
 
 ## Definition of Done
 
@@ -96,6 +96,6 @@ Hard 5-hour build budget (hackathon), partially spent on design already. Every s
 ## Open Questions
 
 - Exact SSE event schema (event names/payload shape for `branch_node_added`, `center_updated`, `agent_error`) — to be defined at implementation time, not blocking the spec.
-- MCP server tool name/input schema (single `agentic_graph_search(query: string)` tool, or split by source/subtopic mode?) — default to a single tool unless implementation reveals a reason to split.
+- MCP server tool name/input schema (single `scout_search(query: string)` tool, or split by source/subtopic mode?) — default to a single tool unless implementation reveals a reason to split.
 - Layout algorithm for toggling between by-source and by-subtopic views (force-directed re-layout vs. two precomputed static layouts) — implementer's call, no UX requirement beyond "the same nodes, regrouped."
 - Whether the stretch goals (Cursor Canvas render, Cursor SDK hand-off button) get attempted depends entirely on remaining time after the Definition of Done items above are met — not planned for up front.
