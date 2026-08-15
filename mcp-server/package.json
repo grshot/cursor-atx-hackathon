@@ -1,0 +1,10 @@
+{
+  "name": "scout-mcp-server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MCP server exposing Scout's scout_search tool. See Phase 5.",
+  "type": "module",
+  "scripts": {
+    "start": "node dist/index.js"
+  }
+}
