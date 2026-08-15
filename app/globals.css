@@ -339,8 +339,20 @@ body {
   animation: rise-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.46s both;
 }
 
+.foot-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.foot-link:hover {
+  color: var(--orange);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* inline brand marks, tinted like the surrounding text */
-.hero-foot a {
+.mark-link {
   display: grid;
   place-items: center;
   line-height: 0;
@@ -355,7 +367,7 @@ body {
   transition: background 0.2s ease;
 }
 
-.hero-foot a:hover .brand-mark {
+.mark-link:hover .brand-mark {
   background: var(--orange);
 }
 

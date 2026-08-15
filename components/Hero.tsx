@@ -100,8 +100,27 @@ export function Hero({ onSearch, onHome }: Props) {
           ))}
         </div>
         <p className="hero-foot">
-          <span>web × x × academic · powered by</span>
+          <span>
+            <a className="foot-link" href="https://google.com" target="_blank" rel="noreferrer">
+              web
+            </a>{" "}
+            ×{" "}
+            <a className="foot-link" href="https://x.com" target="_blank" rel="noreferrer">
+              x
+            </a>{" "}
+            ×{" "}
+            <a
+              className="foot-link"
+              href="https://semanticscholar.org"
+              target="_blank"
+              rel="noreferrer"
+            >
+              academic
+            </a>{" "}
+            · powered by
+          </span>
           <a
+            className="mark-link"
             href="https://cursor.com"
             target="_blank"
             rel="noreferrer"
@@ -112,6 +131,7 @@ export function Hero({ onSearch, onHome }: Props) {
           </a>
           <span>&amp;</span>
           <a
+            className="mark-link"
             href="https://grok.com"
             target="_blank"
             rel="noreferrer"
