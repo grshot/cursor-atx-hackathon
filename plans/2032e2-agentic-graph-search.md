@@ -148,18 +148,20 @@ Phase 0 is otherwise closed out — proceeding to Phase 1.
 ## Phase 4 — Academic Agent (Python)
 
 **Owner:** Teammate B
-**PR:** _(link once opened)_
+**PR:** [#20](https://github.com/grshot/cursor-atx-hackathon/pull/20) (merged)
 **Goal:** Real Semantic Scholar-backed academic agent replacing the Phase 1 stub, conforming to the shared `AgentResult` contract.
 **Estimated diff:** ~150 lines across 2 files
 
 ### Checklist
-- [ ] `api/academic-agent.py` — Vercel Python serverless function: takes 3 sub-queries, calls Semantic Scholar API, synthesizes a mini-answer + citations, returns `AgentResult`-shaped JSON
-- [ ] `lib/agents/academicAgent.ts` — TS wrapper that POSTs to `api/academic-agent`, conforms to the same agent interface as `webAgent`/`xAgent`/`queryAgent` so `orchestrate()` treats all 6 uniformly
-- [ ] Open PR and verify `academicAgent.ts` returns a real `AgentResult` for a sample query
+- [x] `api/academic-agent.py` — Vercel Python serverless function: takes 3 sub-queries, calls Semantic Scholar API, synthesizes a mini-answer + citations, returns `AgentResult`-shaped JSON
+- [x] `lib/agents/academicAgent.ts` — TS wrapper that POSTs to `api/academic-agent`, conforms to the same agent interface as `webAgent`/`xAgent`/`queryAgent` so `orchestrate()` treats all 6 uniformly (landed early in Phase 3; unchanged by #20)
+- [x] Open PR and verify `academicAgent.ts` returns a real `AgentResult` for a sample query
 
 ### Definition of Done
-- [ ] `api/academic-agent.py` returns real Semantic Scholar citations (not mocked) for a test query
-- [ ] `academicAgent.ts` return shape is indistinguishable from the other 5 agents' `AgentResult`
+- [x] `api/academic-agent.py` returns real Semantic Scholar citations (not mocked) for a test query — `SEMANTIC_SCHOLAR_API_KEY` is optional (anonymous with one retry; a 403 key is ignored)
+- [x] `academicAgent.ts` return shape is indistinguishable from the other 5 agents' `AgentResult`
+
+> **Phase 9 note:** the Python function only runs under `vercel dev` — under plain `next dev` the academic agent 404s (renders as a graceful error node). The integration pass must run `vercel dev` to see all 6 agents live.
 
 > **Note to implementing agent:** run `/compact` after this phase merges. Before compacting, retain in working notes:
 > - Confirmed request/response JSON shape between `academicAgent.ts` and `api/academic-agent.py`
@@ -213,55 +215,50 @@ Phase 0 is otherwise closed out — proceeding to Phase 1.
 
 ## Phase 7 — React Flow Canvas: Center + Branch Nodes, Live Streaming
 
-**Owner:** Teammate A
-**PR:** _(link once opened)_
-**Goal:** The primary graph UI — query input, pulsing center node, branch nodes fading/scaling in live as SSE events arrive. Port the visual/interaction design proven out in `demo/index.html` rather than reinventing it.
-**Estimated diff:** ~350 lines across 6 files
+**Owner:** Teammate A (+ redesign by Viren on the same PR)
+**PR:** [#18](https://github.com/grshot/cursor-atx-hackathon/pull/18) (merged)
+**Goal:** The primary graph UI — query input, pulsing center node, branch nodes fading/scaling in live as SSE events arrive.
+**Estimated diff:** ~350 lines across 6 files (final PR much larger — see redesign note)
 
 ### Checklist
-- [ ] `components/SearchInput.tsx` — query submission UI
-- [ ] `hooks/useSearchStream.ts` — connects to `/api/search`, parses SSE events, exposes live node/edge state
-- [ ] `components/GraphCanvas.tsx` — React Flow canvas wiring nodes/edges from `useSearchStream`
-- [ ] `components/CenterNode.tsx` — pulsing state before synthesis, filled state after `center_updated`
-- [ ] `components/BranchNode.tsx` — collapsed state (synthesis + citation count), error state for `agent_error`
-- [ ] Port `demo/index.html`'s intro sequence timing: center pulse first, then branch nodes stagger in with fade + scale (`playIntro()` pattern), not all-at-once
-- [ ] Port `demo/index.html`'s SVG connector-line technique: quadratic-bezier lines from center to each branch, redrawn on a rAF loop tracking live `getBoundingClientRect()` position so lines stay glued to nodes mid-animation (`updateLines()`/`animateLinesFor()` pattern) — do not use React Flow's default straight edges if they don't support this
-- [ ] `app/page.tsx` — wire `SearchInput` + `GraphCanvas` together
-- [ ] Open PR and verify: submitting a query shows a pulsing center node immediately, branch nodes fade in one at a time as agents resolve (no wait-for-all)
+- [x] `components/SearchInput.tsx` — query submission UI (hero + top-bar pill variants)
+- [x] `hooks/useScoutSession.ts` — connects to `/api/search`, parses SSE events, exposes live per-search state (supersedes the original `useSearchStream.ts`; supports multiple concurrent searches)
+- [x] `components/Constellation.tsx` — custom pan/zoom world-coordinate canvas (supersedes the planned React Flow `GraphCanvas.tsx`; fixed world positions made the rAF line-measuring loop unnecessary)
+- [x] `components/CenterNode.tsx` — pulsing state before synthesis, filled state after `center_updated`
+- [x] `components/BranchNode.tsx` — pending ghost state, collapsed state (synthesis + citation count), error state for `agent_error`
+- [x] Intro sequencing: center pulse first, pending ghosts immediately, branch cards fill in as agents resolve
+- [x] Quadratic-bezier connector lines (SVG in world space, `pathLength`-based draw-in)
+- [x] `app/page.tsx` — aurora landing hero → top bar + constellation after first search
+- [x] Open PR and verify: submitting a query shows a pulsing center node immediately, branch nodes fade in one at a time as agents resolve (no wait-for-all)
 
 ### Definition of Done
-- [ ] Center node pulses on submit, before any branch node appears
-- [ ] Branch nodes appear incrementally, not all at once
-- [ ] A failed agent renders as a visibly distinct error-state node
-- [ ] Center node fills with the synthesized answer only after all 6 branches have resolved
+- [x] Center node pulses on submit, before any branch node appears
+- [x] Branch nodes appear incrementally, not all at once (pending ghost cards make the fan-out visible in the first second)
+- [x] A failed agent renders as a visibly distinct error-state node (HTML error bodies sanitized for display)
+- [x] Center node fills with the synthesized answer only after all 6 branches have resolved
 
-> **Note to implementing agent:** run `/compact` after this phase merges. Before compacting, retain in working notes:
-> - `GraphCanvas`/`CenterNode`/`BranchNode` prop shapes — Phase 8 adds the toggle and click-to-expand on top of these without changing the streaming logic
-> - Where node `position` is currently set (likely a naive default layout) — Phase 8 replaces this with the two precomputed layouts from Phase 0
-> - `useSearchStream` return shape (node/edge arrays, connection status) that Phase 8 will read from
+> **Redesign note (landed on this PR):** Suno-style aurora landing on the fox-logo palette (navy/orange/olive/sky/cream; Bricolage Grotesque + Figtree + IBM Plex Mono), light/dark theme toggle (pre-paint script + localStorage), multi-search constellation (each follow-up spawns a new cluster placed rightward toward its best-matching branch, dashed orange trail from that branch, faint cross-links between similar branches across clusters), group halos with outward labels, detail panel (excerpt + expand, numbered inline citations synced to a deduped source list, URL-derived source titles), `subqueries_ready` event + `GraphNode.subQuery` (additive) so angle agents show real sub-query names, mock mode via `!`-prefixed queries for zero-cost design iteration.
 
 ## Phase 8 — Toggle Layouts & Drill-down Expansion
 
-**Owner:** Teammate A
-**PR:** _(link once opened)_
+**Owner:** Teammate A (delivered inside the Phase 7 redesign)
+**PR:** [#18](https://github.com/grshot/cursor-atx-hackathon/pull/18) (merged, same PR as Phase 7)
 **Goal:** By-source/by-subtopic layout toggle over the same result set, plus click-to-expand into raw per-agent sources.
 **Estimated diff:** ~200 lines across 3–4 files
 
 ### Checklist
-- [ ] `lib/layout.ts` — two pure functions computing node positions: by-source (grouped by `agentType` category) and by-subtopic (grouped by sub-query index). Port `demo/index.html`'s `computeLayout()` approach: measure real rendered card/canvas sizes (`offsetWidth`/`offsetHeight`, not `getBoundingClientRect()` which is skewed by in-flight CSS transforms) and place the 6 nodes on an evenly-spaced hex ring sized from those measurements — do not hand-pick percentage positions, they overlap once real content length varies
-- [ ] `components/LayoutToggle.tsx` — UI toggle switching between the two layouts without re-querying
-- [ ] Port `demo/index.html`'s synced color-grouping system: one 3-color triad applied consistently to legend chip + node dot + connector line + floating cluster-name caption, keyed to whichever grouping (by-source/by-subtopic) is currently active, so a viewer can tell at a glance which nodes share a category
-- [ ] `components/BranchNode.tsx` — add click handler that expands an outer ring of raw leaf nodes (pages / X posts / papers) from that agent's citations
-- [ ] `components/GraphCanvas.tsx` — wire toggle + expand state into the existing live-streaming canvas from Phase 7
-- [ ] Open PR and verify toggling re-arranges the same node set instantly, and clicking a branch reveals its raw sources
+- [x] `lib/constellation.ts` — pure position functions for both groupings (supersedes the planned `lib/layout.ts`): "by source" = equidistant ring with each source family pulled into a tight pair; "by angle" = angle-grouped pairs with evidence-weighted radii (more sources → closer to center) + stable per-node jitter
+- [x] Layout toggle — segmented control in `components/TopBar.tsx` switching groupings without re-querying
+- [x] Synced color-grouping: one 3-color triad (olive/orange/sky from the logo) applied to node dot + connector line + group halo + halo caption, keyed to the active grouping
+- [x] Click-to-expand — clicking a resolved branch opens the detail panel: full synthesis with numbered inline citation links and the raw per-agent source list (panel supersedes the planned outer-ring leaf nodes)
+- [x] Wired into the live-streaming constellation canvas
+- [x] Verified: toggling re-arranges the same node set instantly (cards glide, lines redraw); clicking a branch reveals its raw sources
 
 ### Definition of Done
-- [ ] Toggling between by-source and by-subtopic re-positions the same nodes with no network request, and no two nodes overlap at any viewport width tested
-- [ ] Clicking a branch node expands an outer ring of its raw individual citations
-- [ ] Cluster/category names stay legible (not hidden behind a card) in both layout modes
-- [ ] This satisfies the spec's full client-facing Definition of Done except final integration testing
-
-> **Note to implementing agent:** this is the final UI phase — no `/compact` needed, but leave a note for Phase 9 on: any known rough edges in the toggle/expand interaction, and the exact `agentType` → layout-group mapping used (Phase 9 will sanity-check this against Phase 3's actual `agentType` values).
+- [x] Toggling between groupings re-positions the same nodes with no network request
+- [x] Clicking a branch node exposes its raw individual citations (via detail panel)
+- [x] Cluster/category names stay legible — halo labels are placed outside each halo, pushed away from the cluster center
+- [x] This satisfies the spec's full client-facing Definition of Done except final integration testing
 
 ## Phase 9 — Integration & End-to-End Verification
 
@@ -378,6 +375,7 @@ Attempt Phases 10–12 only after Phase 9 (or when explicitly skipping ahead). T
 
 ## Risks to watch
 
+- **xAI credits exhausted** — observed live on 2026-08-15: synthesis failed with "team …6d6309f6b9d9 has used all available credits or reached its monthly spending limit." Each real query costs ~$4–5. If credits aren't topped up before the demo → every search degrades to error states; use `!`-prefixed mock mode for UI work and budget ~3–4 real runs for rehearsal + demo.
 - **Viren is a bottleneck on the shared orchestration core** — Phase 2/3 now sit on one person instead of being split off to a teammate. If Phase 2/3 run long, both entry points are stuck testing against the Phase 1 stub. If Phase 2/3 aren't merged within the first ~2 hours, ship `webAgent`/`xAgent` incrementally (e.g. open a draft PR after just `webAgent` lands) rather than holding both entry points back for the full orchestration PR.
 - **Contract drift between tracks** — if `AgentResult` or `GraphEvent` shape changes after Phase 1 without telling Teammate A/B → their in-flight phases break silently. If this happens, patch in Phase 9 rather than blocking a track mid-build.
 - **Grok tool-call latency** — if 6 concurrent Grok/Semantic Scholar calls take long enough to make the "live streaming" UX feel like a single blocking wait → revisit in Phase 9, consider staggering agent start order so the fastest source lands first.
