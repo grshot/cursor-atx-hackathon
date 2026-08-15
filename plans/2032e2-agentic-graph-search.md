@@ -21,6 +21,8 @@ description: Live-populating node-edge graph search app (Grok-powered 6-agent fa
 
 Phases 2–8 touch disjoint files and can be built in parallel once Phase 1 merges. Each track only needs the stub contracts from Phase 1, not another track's real implementation.
 
+Architecture decisions that constrain all phases live in `docs/adr/` (0001–0005) and `CONTEXT.md`. Stretch Phases 10–12 are listed after Phase 9 and must not change the 6-agent DAG.
+
 ## Phase 0 — Pre-implementation: Decisions & Sanity Checks
 
 **PR:** _(none — no code merged this phase)_
@@ -267,10 +269,83 @@ Phases 2–8 touch disjoint files and can be built in parallel once Phase 1 merg
 - [ ] Deep error handling / retries beyond a single error-state node
 - [ ] Automated test suite
 
+## Decisions (ADRs)
+
+Recorded in `docs/adr/` and domain language in `CONTEXT.md`. Do not re-litigate these during Phases 0–9.
+
+- [ADR-0001](../docs/adr/0001-compose-cursor-retrieval.md) — compose with Cursor TurboPuffer/`semSearch`; do not clone Merkle/TurboPuffer
+- [ADR-0002](../docs/adr/0002-grok-retrieval-reasoning-adapter.md) — Grok-only retrieval; capability-flagged reasoning adapter
+- [ADR-0003](../docs/adr/0003-langfuse-optional-not-langchain.md) — optional Langfuse tracing; not LangChain
+- [ADR-0004](../docs/adr/0004-enrichment-not-extra-agents.md) — extractors + one tagging pass; not a 7th agent
+- [ADR-0005](../docs/adr/0005-hierarchical-depth-layout.md) — by-depth is a third layout, not adaptive fan-out
+
 ## Deferred / post-rollout
 
 - [ ] Cursor Canvas (`.canvas.tsx` live-file render) — stretch-only, not scheduled
 - [ ] Cursor SDK "send to a live coding agent" hand-off — stretch-only, attempt only if Phase 9 finishes early
+
+Attempt Phases 10–12 only after Phase 9 (or when explicitly skipping ahead). They must not change the 6-agent DAG, must not require signups beyond `XAI_API_KEY` for the core demo, and must not add LangChain.
+
+## Phase 10 — Optional Langfuse tracing (stretch)
+
+**PR:** _(link once opened)_
+**Goal:** Trace each query snapshot (sub-queries, 6 agents, synthesis) in Langfuse when env keys are set; no-op otherwise. ADR-0003.
+**Estimated diff:** ~150 lines across `lib/observability/tracer.ts` plus a thin wrap in `orchestrate()`
+**Depends on:** Phase 9 (or skip-ahead)
+
+### Checklist
+- [ ] `lib/observability/tracer.ts` — `Tracer`, `NoopTracer`, `LangfuseTracer` (manual nested spans, flush on `done`)
+- [ ] `createTracer()` returns noop unless `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` are set
+- [ ] `orchestrate()` opens root span `agentic_graph_search`, child spans `subquery` / `agent:web` / `agent:x` / `agent:academic` / `agent:q1..q3` / `enrichment` / `synthesis`
+- [ ] Academic Python stays uninstrumented; TS wrapper records one HTTP span
+- [ ] `.env.local.example` documents optional Langfuse keys; core `next dev` still runs with only `XAI_API_KEY`
+- [ ] No LangChain / LangSmith dependency
+
+### Definition of Done
+- [ ] With keys unset, behavior is identical to Phase 9 (noop tracer)
+- [ ] With keys set, one Langfuse trace per query shows the 6-agent waterfall
+- [ ] A failed agent span records error metadata and does not drop the trace
+
+## Phase 11 — Platform extractors, tags, relationship edges (stretch)
+
+**PR:** _(link once opened)_
+**Goal:** On top of the existing canvas, attach platform features, smart tags, and typed edges between branch nodes. ADR-0004. Not a 7th retrieval agent.
+**Estimated diff:** ~280 lines across extractors, `tagAndRelate.ts`, types, BranchNode chrome
+**Depends on:** Phase 9, Phase 10 tracer span `enrichment` if present
+
+### Checklist
+- [ ] `lib/enrichment/extractors/x.ts` — `likeToCommentRatio`, likes, replies, handle; `unavailable` if fields missing
+- [ ] `lib/enrichment/extractors/academic.ts` — abstract, year, venue, citationCount
+- [ ] `lib/enrichment/extractors/web.ts` — domain, title, snippet, published date
+- [ ] `lib/enrichment/tagAndRelate.ts` — one `ReasoningProvider.complete()` after all 6 agents: tags, `parentConcept`, pairwise relationship edges
+- [ ] Similarity ranking: model score, tag Jaccard as tie-break; leaf sort uses X ratio / academic cite count / else score
+- [ ] `GraphEdge.kind` union: `agrees_with` | `contradicts` | `elaborates` | `same_topic` | `center_branch` (existing)
+- [ ] UI: dashed relationship edges, tag chips, platform badges on BranchNode; expand still shows ranked leaves
+- [ ] Additive events only (`enrichment_updated` or fields on `center_updated`)
+
+### Definition of Done
+- [ ] Fan-out remains exactly 6 agents
+- [ ] Missing X engagement does not drop the citation (extractor `unavailable`)
+- [ ] Toggle by-source / by-subtopic still does not re-query
+- [ ] Relationship edges render between branch nodes without replacing center→branch edges
+
+## Phase 12 — Hierarchical DAG by subject depth (stretch)
+
+**PR:** _(link once opened)_
+**Goal:** Third layout over the same snapshot: abstract `parentConcept` clusters → branch answers → citation leaves. ADR-0005.
+**Estimated diff:** ~120 lines in `lib/layout.ts` + `LayoutToggle`
+**Depends on:** Phase 11 (`parentConcept` tags)
+
+### Checklist
+- [ ] `layoutByDepth(nodes, edges)` — depth 0 concept nodes (`concept:<slug>`), depth 1 branches, depth 2 expanded leaves
+- [ ] Concept nodes are layout-only; no extra Grok calls
+- [ ] `LayoutToggle` becomes three-way: by-source | by-subtopic | by-depth
+- [ ] If enrichment is missing, by-depth falls back to by-subtopic
+
+### Definition of Done
+- [ ] Switching to by-depth repositions the same branch nodes and inserts concept clusters with no network request
+- [ ] Fan-out still exactly 6; no adaptive retrieval
+- [ ] by-source and by-subtopic still work unchanged
 
 ## Risks to watch
 
